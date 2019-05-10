@@ -1,6 +1,7 @@
 from flask import Flask,request, jsonify, make_response
 from flask_api import status
 import pymongo
+import util
 
 app = Flask(__name__)
 
@@ -19,10 +20,11 @@ def instance(instance_id):
 	TODO: create better comments for auto-documentation
 	'''
 	if request.method == 'POST':
-		# get json document and insert into repository
-		appCollection = appDb[str(instance_id)]			
-		jsonDoc = request.get_json()
-		post_id = appCollection.insert_one(jsonDoc).inserted_id
+		# 
+		appCollection = appDb[str(instance_id)]
+		document = util.create_document(request.get_json())
+		# persist document
+		post_id = appCollection.insert_one(document).inserted_id
 		
 		return make_response(jsonify(document_id=str(post_id),instance_id=instance_id), status.HTTP_201_CREATED)
 	else:
@@ -37,6 +39,10 @@ def instance(instance_id):
 def listInstances():
 	collectionList = appDb.list_collection_names()
 	return jsonify(collectionList)
+
+@app.route("/<uuid:instance_id>")
+def teste(instance_id):
+	return True
 
 
 if __name__ == "__main__":
