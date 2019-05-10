@@ -1,4 +1,5 @@
-from flask import Flask,Request,Response
+from flask import Flask,request, jsonify, make_response
+from flask_api import status
 import pymongo
 
 app = Flask(__name__)
@@ -14,21 +15,30 @@ def testConnection():
 @app.route("/instances/<uuid:instance_id>", methods = ['GET', 'POST'])
 def instance(instance_id):
 	'''
-	Creates a collection to host the app instance
+	Creates a collection to host the app instance.
+	TODO: create better comments for auto-documentation
 	'''
-	if Request.method == 'POST':
-		# check if exists. if not, create collection and insert a document to start collection at mongodb.
-		#client.
-		collectionList = appDb.list_collection_names()
-		return "There is a collection: " + str(collectionList)
-	
-	
-	return str(instance_id)
-
-if __name__ == "__main__":
-	app.run()
+	if request.method == 'POST':
+		# get json document and insert into repository
+		appCollection = appDb[str(instance_id)]			
+		jsonDoc = request.get_json()
+		post_id = appCollection.insert_one(jsonDoc).inserted_id
+		
+		return make_response(jsonify(document_id=str(post_id),instance_id=instance_id), status.HTTP_201_CREATED)
+	else:
+		appColInfo = appDb.get_collection(str(instance_id))
+		colInfoResponse = {
+			"full_name": appColInfo.full_name,
+			"aprox_doc_count": appColInfo.estimated_document_count(maxTimeMS=5000)
+		}
+		return make_response(jsonify(colInfoResponse), status.HTTP_200_OK )
 
 @app.route("/instances")
 def listInstances():
 	collectionList = appDb.list_collection_names()
-	return collectionList
+	return jsonify(collectionList)
+
+
+if __name__ == "__main__":
+	app.run()
+
