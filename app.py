@@ -46,7 +46,7 @@ def listInstances():
 @app.route("/<uuid:instance_id>/head")
 def findHead(instance_id):
 	'''
-	Gets the lastest document of the instance collection
+	Gets the latest document of the instance collection
 	'''
 	appCollection = appDb.get_collection(str(instance_id))
 	latestDocument = appCollection.find().sort('timestamp', pymongo.DESCENDING).limit(1)
@@ -61,8 +61,41 @@ def findFirst(instance_id):
 	firstDocument = appCollection.find().sort('timestamp', pymongo.ASCENDING).limit(1)
 	return make_response(util.dumps(firstDocument), status.HTTP_200_OK)
 
+@app.route("/<uuid:instance_id>/first/<int:number_of_documents>")
+def getFirstDocuments(instance_id, number_of_documents):
+	'''
+	Lists the first n documents, from oldest to newest.
+	TODO: Same as history/first. Check if we should change this.
+	'''
+	if number_of_documents > 1000:
+		number_of_documents = 1000
+	appCollection = appDb.get_collection(str(instance_id))
+	historyDocuments = appCollection.find().sort('timestamp', pymongo.ASCENDING).limit(number_of_documents)
+	return make_response(util.dumps(historyDocuments), status.HTTP_200_OK)
+
+@app.route("/<uuid:instance_id>/history")
+def getHistory(instance_id):
+	'''
+	Lists the last 1000 documents from the history, from most recent to oldest.
+	'''
+	return status.HTTP_204_NO_CONTENT
+
+@app.route("/<uuid:instance_id>/history/first/<int:number_of_documents>")
+def getHistorySince(instance_id, number_of_documents):
+	'''
+	Lists the first n documents, from oldest to newest.
+	'''
+	appCollection = appDb.get_collection(str(instance_id))
+	historyDocuments = appCollection.find().sort('timestamp', pymongo.ASCENDING).limit(number_of_documents)
+	return make_response(util.dumps(historyDocuments), status.HTTP_200_OK)
 
 
+@app.route("/<uuid:instance_id>/history/last/<int:limit>")
+def getHistoryUntil(instance_id, limit):
+	'''
+	Lists the last n documents, from most recent to the oldest. There is a hard limit of 1000 (one thousand) documents.
+	'''
+	return status.HTTP_204_NO_CONTENT
 
 
 if __name__ == "__main__":
