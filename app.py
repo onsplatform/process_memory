@@ -78,7 +78,11 @@ def getHistory(instance_id):
 	'''
 	Lists the last 1000 documents from the history, from most recent to oldest.
 	'''
-	return status.HTTP_204_NO_CONTENT
+	first = request.args['first']
+	last = request.args['last']
+	print(first)
+	print(last)
+	return make_response(str(first) + "___" + str(last),status.HTTP_200_OK) 
 
 @app.route("/<uuid:instance_id>/history/first/<int:number_of_documents>")
 def getHistorySince(instance_id, number_of_documents):
