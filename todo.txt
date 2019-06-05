@@ -1,0 +1,18 @@
+'''
+@app.route("/create") - ok
+@app.route("/commit") - ok
+@app.route("/head") - ok
+@app.route("/history")
+@app.route("/first") - ok
+@app.route("/history_last") - ok
+@app.route("/history_first") - ok
+@app.route("/first_and_last")
+@app.route("/clone") - ??
+@app.route("/event")
+# This is like a table inside a database
+@app.route("/getcollection") - ?
+@app.route("/putcollection") - ?
+
+A API atual o id da cole��o � passado direto pela URL.
+@app.route("/collection_num/create")
+'''

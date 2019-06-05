@@ -1,9 +1,12 @@
 import pymongo
 from flask import current_app, g
 from flask.cli import with_appcontext
-import click
 
-def get_db():    
+def get_db():
+    """ 
+    Connect to database. First create the URI and then connect to it.
+    Production params should come from a config file. Default values are provided for dev.
+    """    
     uri = f"mongodb+srv://{current_app.config['USER']}:{current_app.config['SECRET_KEY']}@{current_app.config['DATABASE']}"
     if 'db' not in g:
         g.db = pymongo.MongoClient(uri) 

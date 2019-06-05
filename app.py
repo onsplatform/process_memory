@@ -6,7 +6,7 @@ import util
 
 app = Flask(__name__)
 
-client = pymongo.MongoClient("mongodb+srv://dbadmin:T4FbKpQoURhrilE7@docdb-jmi5t.mongodb.net/test?retryWrites=true")
+client = pymongo.MongoClient("mongodb+srv://dbadmin:T4FbKpQoURhrilE7@docdb-jmi5t.mongodb.net")
 appDb = client["process_memory"]
 
 
