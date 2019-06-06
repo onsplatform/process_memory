@@ -15,9 +15,9 @@ def get_db():
 def init_app(app):
     app.teardown_appcontext(close_db)
     with app.app_context():
-        init_db_collection()    
+        get_db_collection()    
 
-def init_db_collection():
+def get_db_collection():
     db = get_db()
     return db[current_app.config['COLLECTION']]
 

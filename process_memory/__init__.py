@@ -29,4 +29,8 @@ def create_app(test_config=None):
         mydb = db.get_db()
         return str(mydb.test)
 
+    from . import history
+    app.register_blueprint(history.bp)
+    app.add_url_rule('/', endpoint='index')
+
     return app
