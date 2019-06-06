@@ -3,7 +3,6 @@ from flask_api import status
 import pymongo
 import util
 
-
 app = Flask(__name__)
 
 client = pymongo.MongoClient("mongodb+srv://dbadmin:T4FbKpQoURhrilE7@docdb-jmi5t.mongodb.net")
@@ -76,12 +75,11 @@ def getFirstDocuments(instance_id, number_of_documents):
 @app.route("/<uuid:instance_id>/history")
 def getHistory(instance_id):
 	'''
-	Lists the last 1000 documents from the history, from most recent to oldest.
+	Lists the last 100 documents from the history, from most recent to oldest.
 	'''
-	first = request.args['first']
-	last = request.args['last']
-	print(first)
-	print(last)
+	first = request.args.get('first', default=-1, type = int)
+	last = request.args.get('last', default=-1, type = int)
+
 	return make_response(str(first) + "___" + str(last),status.HTTP_200_OK) 
 
 @app.route("/<uuid:instance_id>/history/first/<int:number_of_documents>")
@@ -98,9 +96,9 @@ def getHistorySince(instance_id, number_of_documents):
 def getHistoryUntil(instance_id, limit):
 	'''
 	Lists the last n documents, from most recent to the oldest. There is a hard limit of 1000 (one thousand) documents.
+	TODO: test if we should do this or just use the current contract.
 	'''
 	return status.HTTP_204_NO_CONTENT
-
 
 if __name__ == "__main__":
 	app.run()
