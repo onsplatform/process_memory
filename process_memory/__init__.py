@@ -1,5 +1,7 @@
 import os
 from flask import Flask
+from process_memory import db
+
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
@@ -10,14 +12,13 @@ def create_app(test_config=None):
         COLLECTION = 'process_memory'
     )
 
-    if test_config is None:
+    if not test_config:
         # Load the instance config, when not testing
         app.config.from_pyfile('config.py', silent=True)
     else:
         # Load the test config if passed in
         app.config.from_mapping(test_config)
-
-    from process_memory import db
+    
     db.init_app(app)
 
     @app.route('/hello')

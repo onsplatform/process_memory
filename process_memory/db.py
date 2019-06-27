@@ -1,6 +1,6 @@
 import pymongo
 from flask import current_app, g
-from flask.cli import with_appcontext
+
 
 def get_db():
     """ 
@@ -12,14 +12,17 @@ def get_db():
         g.db = pymongo.MongoClient(uri) 
     return g.db
 
+
 def init_app(app):
     app.teardown_appcontext(close_db)
     with app.app_context():
         get_db_collection()    
 
+
 def get_db_collection():
     db = get_db()
     return db[current_app.config['COLLECTION']]
+
 
 def close_db(e=None):
     db = g.pop('db', None)
