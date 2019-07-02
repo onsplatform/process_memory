@@ -1,8 +1,10 @@
 from flask import Blueprint, request, jsonify, make_response
 from flask_api import status
+from bson.json_util import dumps
 import util
 from process_memory.db import get_db_collection
 from pymongo import ASCENDING, DESCENDING
+
 
 bp = Blueprint('instances', __name__)
 
@@ -15,6 +17,7 @@ def list_instances():
     """
     db = get_db_collection()
     collection_list = db.list_collection_names()
+
     return jsonify(collection_list)
 
 
@@ -41,6 +44,7 @@ def instance(instance_id):
         "full_name": app_collection.full_name,
         "aprox_doc_count": app_collection.estimated_document_count(maxTimeMS=5000)
     }
+
     return make_response(jsonify(col_info_response), status.HTTP_200_OK)
 
 
@@ -54,7 +58,8 @@ def find_head(instance_id):
     db = get_db_collection()
     app_collection = db.get_collection(str(instance_id))
     latest_document = app_collection.find().sort('timestamp', DESCENDING).limit(1)
-    return make_response(util.create_document(latest_document), status.HTTP_200_OK)
+
+    return make_response(dumps(latest_document), status.HTTP_200_OK)
 
 
 @bp.route("/<uuid:instance_id>/first")
@@ -67,7 +72,8 @@ def find_first(instance_id):
     db = get_db_collection()
     app_collection = db.get_collection(str(instance_id))
     first_document = app_collection.find().sort('timestamp', ASCENDING).limit(1)
-    return make_response(util.create_document(first_document), status.HTTP_200_OK)
+
+    return make_response(dumps(first_document), status.HTTP_200_OK)
 
 
 @bp.route("/<uuid:instance_id>/first/<int:number_of_documents>")
@@ -85,4 +91,5 @@ def get_first_documents(instance_id, number_of_documents):
 
     app_collection = db.get_collection(str(instance_id))
     history_documents = app_collection.find().sort('timestamp', ASCENDING).limit(number_of_documents)
-    return make_response(util.create_document(history_documents), status.HTTP_200_OK)
+
+    return make_response(dumps(history_documents), status.HTTP_200_OK)
