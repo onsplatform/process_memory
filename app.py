@@ -2,25 +2,18 @@ from flask import Flask, request, jsonify, make_response
 from flask_api import status
 import pymongo
 import util
+import process_memory
 
-app = Flask(__name__)
+# app = Flask(__name__)
+app = process_memory.create_app()
+# client = pymongo.MongoClient("mongodb+srv://dbadmin:T4FbKpQoURhrilE7@docdb-jmi5t.mongodb.net")
+# appDb = client.get_database("process_memory")
+# appDb = process_memory.db.get_db()
 
-client = pymongo.MongoClient("mongodb+srv://dbadmin:T4FbKpQoURhrilE7@docdb-jmi5t.mongodb.net")
-appDb = client.get("process_memory")
-
-
-@app.route("/")
-def test_connection():
-	db = client.test
-	return str(db)
-
-
+"""
+this is deprecated. using blueprints instead.
 @app.route("/instances/<uuid:instance_id>", methods=['GET', 'POST'])
 def instance(instance_id):
-	"""
-	Creates a collection and inserts a document to host the app instance.
-	TODO: create better comments for auto-documentation
-	"""
 	app_collection = appDb.get_collection(str(instance_id))
 	
 	if request.method == 'POST':
@@ -43,6 +36,7 @@ def instance(instance_id):
 def list_instances():
 	collection_list = appDb.list_collection_names()
 	return jsonify(collection_list)
+"""
 
 
 @app.route("/<uuid:instance_id>/head")
@@ -76,8 +70,11 @@ def get_first_documents(instance_id, number_of_documents):
 	app_collection = appDb.get_collection(str(instance_id))
 	history_documents = app_collection.find().sort('timestamp', pymongo.ASCENDING).limit(number_of_documents)
 	return make_response(util.dumps(history_documents), status.HTTP_200_OK)
-
-
+"""
+#	==============================================================================================================
+#	BELOW THIS = MOVED TO HISTORY BLUEPRINT
+#	==============================================================================================================
+"""
 @app.route("/<uuid:instance_id>/history")
 def get_history(instance_id):
 	"""
@@ -86,7 +83,7 @@ def get_history(instance_id):
 	first = request.args.get('first', default=-1, type = int)
 	last = request.args.get('last', default=-1, type = int)
 
-	return make_response(str(first) + "___" + str(last),status.HTTP_200_OK) 
+	return make_response(str(first) + "___" + str(last), status.HTTP_200_OK)
 
 
 @app.route("/<uuid:instance_id>/history/first/<int:number_of_documents>")

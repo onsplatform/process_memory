@@ -4,12 +4,17 @@ from process_memory import db
 
 
 def create_app(test_config=None):
+    """
+    Application Factory. Register new modules below.
+    :param test_config:
+    :return:
+    """
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
-        USER = 'dbadmin',
+        USER='dbadmin',
         SECRET_KEY='T4FbKpQoURhrilE7',        
-        DATABASE = 'docdb-jmi5t.mongodb.net/test?retryWrites=true',
-        COLLECTION = 'process_memory'
+        DATABASE='docdb-jmi5t.mongodb.net/test?retryWrites=true',
+        COLLECTION='process_memory'
     )
 
     if not test_config:
@@ -28,10 +33,9 @@ def create_app(test_config=None):
     @app.route('/')
     def testdb():
         mydb = db.get_db()
-        return str(mydb.test)
+        return str(f"This is using the factory: {mydb.test}")
 
-    from . import history
-    app.register_blueprint(history.bp)
-    app.add_url_rule('/', endpoint='index')
+    from . import instances
+    app.register_blueprint(instances.bp)
 
     return app
