@@ -36,19 +36,32 @@ def get_collection(collection: str):
     :param collection: Collection unique id identifier.
     :return: List of documents or nothing
     """
-    db = get_db_collection()
-    app_collection = db.get_collection(str(collection)).find(request.get_json())
+    if request.data:
+        db = get_db_collection()
+        app_collection = db.get_collection(str(collection)).find(request.get_json())
 
-    if app_collection.count() > 0:
-        response = [item for item in app_collection]
-        return make_response(jsonify(response), status.HTTP_200_OK)
+        if app_collection.count() > 0:
+            response = [item for item in app_collection]
+            return make_response(jsonify(response), status.HTTP_200_OK)
 
     return make_response("", status.HTTP_204_NO_CONTENT)
 
 
 @bp.route("/<uuid:collection>", methods=['PUT'])
 def update_collection(collection):
-    return NotImplemented
+    if request.data:
+        db = get_db_collection()
+        app_collection = db.get_collection(str(collection))
+
+        finder = request.get_json().get('filter')
+        document = request.get_json().get('replacement')
+
+        response: dict = app_collection.find_one_and_replace(filter=finder, replacement=document)
+
+        if response:
+            return make_response(jsonify(response), status.HTTP_200_OK)
+
+    return make_response("", status.HTTP_304_NOT_MODIFIED)
 
 
 """
