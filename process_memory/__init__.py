@@ -35,7 +35,8 @@ def create_app(test_config=None):
         mydb = db.get_db()
         return str(f"This is using the factory: {mydb.test}")
 
-    from . import instances
+    from . import instances, collection
     app.register_blueprint(instances.bp)
+    app.register_blueprint(collection.bp)
 
     return app

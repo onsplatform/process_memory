@@ -27,53 +27,31 @@ def post_collection(collection: str):
 
 @bp.route("/<uuid:collection>", methods=['GET'])
 def get_collection(collection: str):
+    """
+    Find content inside a collection. Requests parameters as a dictionary:
+    {
+    "tipo_de_usina": "termica",
+    "usina": "Angra"
+    }
+    :param collection: Collection unique id identifier.
+    :return: List of documents or nothing
+    """
     db = get_db_collection()
-    app_collection = db.get_collection(str(collection))
+    app_collection = db.get_collection(str(collection)).find(request.get_json())
 
-    response = app_collection.find()
+    if app_collection.count() > 0:
+        response = [item for item in app_collection]
+        return make_response(jsonify(response), status.HTTP_200_OK)
 
-    return NotImplemented
+    return make_response("", status.HTTP_204_NO_CONTENT)
 
 
 @bp.route("/<uuid:collection>", methods=['PUT'])
-def update_collection():
+def update_collection(collection):
     return NotImplemented
 
 
 """
-server.post('/:collection', (req, res, next) => {
-
-    var collection_name = req.params.collection;
-    data = {}
-    if (req.body) {
-        data = req.body;
-    }
-    sto.saveDocument(collection_name, data).
-        then((result) => {
-            res.send(200, result);
-        }).
-        catch((err) => {
-            console.log("Erro no 'create':", err);
-            res.send(500, err.toString());
-        });
-});
-
-
-server.get('/:collection', (req, res, next) => {
-    var collection_name = req.params.collection;
-    var query = ConvertJsonStringToObject(req.query);
-    delete query["app_origin"]
-
-    sto.findDocument(collection_name, query || {}).
-        then((result) => {
-            res.send(result);
-        }).
-        catch((err) => {
-            console.log("Erro no 'first':", err);
-            res.send(500, err.toString());
-        });
-});
-
 server.put('/:collection', (req, res, next) => {
     var collection_name = req.params.collection;
     data = {}
