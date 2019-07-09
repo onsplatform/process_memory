@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, make_response
 from flask_api import status
 from process_memory.db import get_db_collection
-from pymongo import ASCENDING, DESCENDING
+from pymongo import ASCENDING
 import util
 
 bp = Blueprint('collection', __name__)
@@ -48,7 +48,20 @@ def get_collection(collection: str):
 
 
 @bp.route("/<uuid:collection>", methods=['PUT'])
-def update_collection(collection):
+def replace_collection(collection):
+    """
+    Replaces a single document inside the collection with another document.
+    Filter is what is going to be found. It should be a dictionary with a single or various keys and values.
+    Replacement is the new document that is going to replace the older one found.
+    Sample:
+    {
+        "filter": {"tipoUsina": "termica", "nomeUsina": "Angra"},
+        "replacement": { "tipoUsina":"hidro", "nomeUsina":"Tucurui" }
+    }
+    Parameters above will search for all documents in the collection, return one, replace it with the new document.
+    :param collection: collection: Collection unique id identifier.
+    :return: Dictionary with either the old document or empty.
+    """
     if request.data:
         db = get_db_collection()
         app_collection = db.get_collection(str(collection))
@@ -62,25 +75,3 @@ def update_collection(collection):
             return make_response(jsonify(response), status.HTTP_200_OK)
 
     return make_response("", status.HTTP_304_NOT_MODIFIED)
-
-
-"""
-server.put('/:collection', (req, res, next) => {
-    var collection_name = req.params.collection;
-    data = {}
-    if (req.body) {
-        data = req.body;
-    }
-    var query = ConvertJsonStringToObject(req.query);
-    delete query["app_origin"]
-    sto.updateDocument(collection_name, query || {}, data).
-        then((result) => {
-            res.send(result);
-        }).
-        catch((err) => {
-            console.log("Erro no 'first':", err);
-            res.send(500, err.toString());
-        });
-});
-
-"""
