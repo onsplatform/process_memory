@@ -13,14 +13,16 @@ bp = Blueprint('instances', __name__)
 def list_instances():
     """
     Lists all the ids of the instances in the database.
-    :return:
+    :return: list of json documents that contains the instances in the database collection.
     """
     db = get_db_collection()
     collection_list = db.list_collection_names()
 
     return jsonify(collection_list)
 
-
+# These 2 top routes are compatibility only. They should by all means be avoided.
+@bp.route("/<uuid:instance_id>/create", methods=['POST'])
+@bp.route("/<uuid:instance_id>/commit", methods=['POST'])
 @bp.route("/instances/<uuid:instance_id>", methods=['GET', 'POST'])
 def instance(instance_id):
     """

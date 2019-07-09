@@ -9,16 +9,6 @@ bp = Blueprint('history', __name__)
 
 
 @bp.route("/<uuid:instance_id>/history")
-def getHistory(instance_id):
-	"""
-	Lists the last 1000 documents from the history, from most recent to oldest.
-	"""
-	first = request.args.get('first', default=-1, type=int)
-	last = request.args.get('last', default=-1, type=int)
-	return make_response(str(first) + "___" + str(last), status.HTTP_200_OK)
-
-
-@bp.route("/<uuid:instance_id>/history")
 def get_history(instance_id):
 	"""
 	Lists the last 100 documents from the history, from most recent to oldest.
