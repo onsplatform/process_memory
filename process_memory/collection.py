@@ -14,21 +14,26 @@ def post_collection(collection: str):
     :param collection: Collection unique id identifier.
     :return: HTTP_STATUS
     """
-    db = get_db_collection()
-    app_collection = db.get_collection(str(collection))
+    posted_document = request.get_json()
 
-    document = util.create_document(request.get_json())
-    # persist document
-    post_id = app_collection.insert_one(document).inserted_id
-    app_collection.create_index([("timestamp", ASCENDING)])
+    if posted_document:
+        db = get_db_collection()
+        app_collection = db.get_collection(str(collection))
 
-    return make_response(jsonify(document_id=str(post_id), instance_id=collection), status.HTTP_201_CREATED)
+        document = util.create_document(posted_document)
+        # persist document
+        post_id = app_collection.insert_one(document).inserted_id
+        app_collection.create_index([("timestamp", ASCENDING)])
+
+        return make_response(jsonify(document_id=str(post_id), instance_id=collection), status.HTTP_201_CREATED)
+
+    return make_response("", status.HTTP_304_NOT_MODIFIED)
 
 
 @bp.route("/<uuid:collection>", methods=['GET'])
 def get_collection(collection: str):
     """
-    Find content inside a collection. Requests parameters as a dictionary:
+    Find content inside a collection. Requests pacollectionrameters as a dictionary:
     {
     "tipo_de_usina": "termica",
     "usina": "Angra"
@@ -36,9 +41,10 @@ def get_collection(collection: str):
     :param collection: Collection unique id identifier.
     :return: List of documents or nothing
     """
-    if request.data:
+    collection_filter = request.get_json()
+    if collection_filter:
         db = get_db_collection()
-        app_collection = db.get_collection(str(collection)).find(request.get_json())
+        app_collection = db.get_collection(str(collection)).find(filter=collection_filter)
 
         if app_collection.count() > 0:
             response = [item for item in app_collection]

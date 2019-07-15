@@ -1,6 +1,7 @@
 import os
 from flask import Flask
 from process_memory import db
+from . import instances, collection, history
 
 
 def create_app(test_config=None):
@@ -26,17 +27,13 @@ def create_app(test_config=None):
     
     db.init_app(app)
 
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
-
     @app.route('/')
     def testdb():
         mydb = db.get_db()
-        return str(f"This is using the factory: {mydb.test}")
+        return str(f"Database TEST: {mydb.test}")
 
-    from . import instances, collection
     app.register_blueprint(instances.bp)
     app.register_blueprint(collection.bp)
+    app.register_blueprint(history.bp)
 
     return app

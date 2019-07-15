@@ -20,7 +20,7 @@ def list_instances():
 
     return jsonify(collection_list)
 
-# These 2 top routes are compatibility only. They should by all means be avoided.
+# The 2 top routes are compatibility only. They should, by all means, be avoided.
 @bp.route("/<uuid:instance_id>/create", methods=['POST'])
 @bp.route("/<uuid:instance_id>/commit", methods=['POST'])
 @bp.route("/instances/<uuid:instance_id>", methods=['GET', 'POST'])
@@ -73,7 +73,7 @@ def find_first(instance_id):
     """
     db = get_db_collection()
     app_collection = db.get_collection(str(instance_id))
-    first_document = app_collection.find().sort('timestamp', ASCENDING).limit(1)
+    first_document = app_collection.find().sort('timestamp', direction=ASCENDING).limit(1)
 
     return make_response(dumps(first_document), status.HTTP_200_OK)
 
@@ -92,6 +92,40 @@ def get_first_documents(instance_id, number_of_documents):
         number_of_documents = 1000
 
     app_collection = db.get_collection(str(instance_id))
-    history_documents = app_collection.find().sort('timestamp', ASCENDING).limit(number_of_documents)
+    history_documents = app_collection.find().sort('timestamp', ASCENDING).limit(number_of_documents).limit(1)
 
     return make_response(dumps(history_documents), status.HTTP_200_OK)
+
+
+# The top route is legacy support. Should be avoided in the future.
+@bp.route("/<uuid:from_instance_id>/<uuid:to_instance_id>/clone", methods=['POST'])
+@bp.route("/reproduction/<uuid:from_instance_id>/<uuid:to_instance_id>", methods=['POST'])
+def clone_instance(from_instance_id, to_instance_id):
+    """
+    Lists the first n documents, from oldest to newest.
+    :param from_instance_id: unique collection identification to copy from
+    :param to_instance_id: unique collection identification destination
+    return: id of the new document inside the collection
+    """
+    db = get_db_collection()
+    source_collection = db.get_collection(str(from_instance_id))
+    projection_fields = {'_id': False}
+
+    # Find the first document of the "from_instance_id" collection. Projection does not bring old id.
+    source_document = source_collection.find(projection=projection_fields).sort('timestamp', ASCENDING).limit(1)
+    # Prepare a new collection, with the destination UUID.
+    # Save the document. New document id will be assigned by database.
+    destination_collection = db.get_collection(str(to_instance_id))
+    destination_document = destination_collection.insert_one(source_document[0])
+
+    return make_response(str(destination_document.inserted_id), status.HTTP_200_OK)
+
+
+@bp.route("/instances/byEntities")
+def find_by_entities():
+    return NotImplemented
+
+
+@bp.route("/<uuid:instance_id>/event")
+def find_by_event(instance_id):
+    return NotImplemented
