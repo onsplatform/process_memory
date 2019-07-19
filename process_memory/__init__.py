@@ -27,6 +27,10 @@ def create_app(test_config=None):
     
     db.init_app(app)
 
+    @app.route('/hello')
+    def hello():
+        return 'Hello, World!'
+
     @app.route('/')
     def testdb():
         mydb = db.get_db()

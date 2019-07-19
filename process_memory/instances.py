@@ -18,7 +18,8 @@ def list_instances():
     db = get_db_collection()
     collection_list = db.list_collection_names()
 
-    return jsonify(collection_list)
+    return make_response(dumps(collection_list), status.HTTP_200_OK)
+
 
 # The 2 top routes are compatibility only. They should, by all means, be avoided.
 @bp.route("/<uuid:instance_id>/create", methods=['POST'])

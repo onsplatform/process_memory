@@ -1,19 +1,20 @@
-import os
-import tempfile
 import pytest
 
-import process_memory
+from process_memory.db import get_db
+from flask_api import status
 
-"""
-@pytest.fixture
-def client():
-    process_memory.app.config['TESTING'] = True
 
-    with flaskr.app.test_client() as client:
-        with flaskr.app.app_context():
-            flaskr.init_db()
-        yield client
+def test_hello(client):
+    """
+    Test app is initializing
+    """
+    response = client.get("/hello")
+    assert response.data == b"Hello, World!"
 
-    os.close(db_fd)
-    os.unlink(flaskr.app.config['DATABASE'])
-"""
+
+def test_response(client):
+    """
+    Teste app root
+    """
+    response = client.get("/")
+    assert response.status_code == status.HTTP_200_OK

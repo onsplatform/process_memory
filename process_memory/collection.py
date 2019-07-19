@@ -33,7 +33,7 @@ def post_collection(collection: str):
 @bp.route("/<uuid:collection>", methods=['GET'])
 def get_collection(collection: str):
     """
-    Find content inside a collection. Requests pacollectionrameters as a dictionary:
+    Find content inside a collection. Requests collection parameters as a dictionary:
     {
     "tipo_de_usina": "termica",
     "usina": "Angra"

@@ -9,14 +9,14 @@ def get_db():
     """
     uri = f"mongodb+srv://{current_app.config['USER']}:{current_app.config['SECRET_KEY']}@{current_app.config['DATABASE']}"
     if 'db' not in g:
-        g.db = pymongo.MongoClient(uri) 
+        g.db = pymongo.MongoClient(uri)
     return g.db
 
 
 def init_app(app):
     app.teardown_appcontext(close_db)
     with app.app_context():
-        get_db_collection()    
+        get_db_collection()
 
 
 def get_db_collection():
