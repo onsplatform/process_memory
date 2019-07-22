@@ -33,8 +33,8 @@ def instance(instance_id):
     """
     db = get_db_collection()
     app_collection = db.get_collection(str(instance_id))
-
-    if request.method == 'POST':
+   
+    if request.method == 'POST' and request.data:
         document = util.create_document(request.get_json())
         # persist document
         post_id = app_collection.insert_one(document).inserted_id
