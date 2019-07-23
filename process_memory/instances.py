@@ -119,7 +119,7 @@ def clone_instance(from_instance_id, to_instance_id):
     destination_collection = db.get_collection(str(to_instance_id))
     destination_document = destination_collection.insert_one(source_document[0])
 
-    return make_response(str(destination_document.inserted_id), status.HTTP_200_OK)
+    return make_response(str(destination_document.inserted_id), status.HTTP_201_CREATED)
 
 
 @bp.route("/instances/byEntities")

@@ -20,6 +20,11 @@ def test_create_instance(client, path):
     assert response.status_code == status.HTTP_201_CREATED
 
 
+@pytest.mark.parametrize("path", [""])
+def test_clone_instance(client, path):
+    response = client.post(path)
+
+
 def test_list_instances(client):
     response = client.get("/instances")
     assert response.status_code == status.HTTP_200_OK
@@ -29,3 +34,10 @@ def test_list_instances(client):
 def test_instances(client, path):
     response = client.get(path)
     assert response.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.parametrize("path",
+                        [f"/a59ee3fd-72bf-49cf-86d4-a9f79281c70b/{uuid.uuid4()}/clone"])
+def test_clone_instance(client, path):
+    response = client.post(path)
+    assert response.status_code == status.HTTP_201_CREATED
