@@ -11,6 +11,7 @@ flask = "*"
 pymongo = "*"
 flask-api = "*"
 dnspython = "*"
+gunicorn = "*"
 
 [requires]
 python_version = "3.7"

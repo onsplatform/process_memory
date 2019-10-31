@@ -1,9 +1,20 @@
-# process_memory
+# Process Memory
 This is the processing memory of each instanced app, which keeps a history of what happened to the data.
 
-# Create Virtual Enviroment
+This application is built using the following high level architecture:
+- Nginx: Reverse HTTP proxy
+- Gunicorn:  WSGI HTTP Server
+- Flask: Application Server
+- Document Database (must be compatible with MongoDB 3.6+)
 
-# Install Requirements
+# Configuration
+
+# Running the Process Memory App
+
+```shell script
+gunicorn wsgi:process_memory_app
+```
+
 
 ## MongoDB Support
 
