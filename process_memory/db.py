@@ -7,7 +7,9 @@ def get_db():
     Connect to database. First create the URI and then connect to it.
     Production params should come from a config file. Default values are provided for dev.
     """
-    uri = f"mongodb+srv://{current_app.config['USER']}:{current_app.config['SECRET_KEY']}@{current_app.config['DATABASE']}"
+    uri = f"mongodb://{current_app.config['USER']}:{current_app.config['SECRET']}@{current_app.config['HOST']}" \
+          f":{current_app.config['PORT']}/{current_app.config['OPTIONS']}"
+
     if 'db' not in g:
         g.db = pymongo.MongoClient(uri)
     return g.db

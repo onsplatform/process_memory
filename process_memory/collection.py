@@ -15,7 +15,7 @@ def post_collection(collection: str):
     :return: HTTP_STATUS
     """
     posted_document = request.get_json()
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     if posted_document:
         db = get_db_collection()
         app_collection = db.get_collection(str(collection))

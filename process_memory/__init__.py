@@ -12,11 +12,15 @@ def create_app(test_config=None):
     """
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
-        USER=os.getenv('DOCDB_USER', 'dbadmin'),
-        SECRET_KEY=os.getenv('DOCDB_SECRET_KEY', 'secret'),
-        DATABASE=os.getenv('DOCDB_HOST', 'docdb-jmi5t.mongodb.net/test?retryWrites=true'),
-        COLLECTION=os.getenv('DOCDB_COLLECTION', 'process_memory')
+        USER=os.getenv('DOCDB_USER', 'docdbadmin'),
+        SECRET=os.getenv('DOCDB_SECRET', 'docdbadmin'),
+        HOST=os.getenv('DOCDB_HOST', 'plataforma-docdb.cluster-czqebrnlxa8n.us-east-1.docdb.amazonaws.com'),
+        COLLECTION=os.getenv('DOCDB_COLLECTION', 'process_memory'),
+        PORT=os.getenv('DOCDB_PORT', '27017'),
+        OPTIONS=os.getenv('DOCDB_OPTIONS', '?ssl=true&ssl_ca_certs=rds-combined-ca-bundle.pem&replicaSet=rs0')
     )
+
+
 
     if not test_config:
         # Load the instance config, when not testing
