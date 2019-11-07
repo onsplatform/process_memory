@@ -1,5 +1,5 @@
 import pytest
-from process_memory.db import get_db
+from process_memory.db import open_db_connection
 
 
 def test_db(app):
@@ -7,5 +7,5 @@ def test_db(app):
     Test database connection
     """
     with app.app_context():
-        database = get_db()
-        assert database is get_db()
+        database = open_db_connection()
+        assert database is open_db_connection()

@@ -19,11 +19,11 @@ used for development.
 
 ### DOCDB        
         
-- DOCDB_USER: database username;
-- DOCDB_SECRET: database password;
-- DOCDB_HOST: database server address;
-- DOCDB_COLLECTION: default collection that you want to access;
-- DOCDB_OPTIONS: these are other configuration options necessary to connect.
+- **DOCDB_USER**: database username;
+- **DOCDB_SECRET**: database password;
+- **DOCDB_HOST**: database server address;
+- **DOCDB_COLLECTION**: default collection that you want to access;
+- **DOCDB_OPTIONS**: these are other configuration options necessary to connect.
 
 Folow the examples below for all of the listed above.
 

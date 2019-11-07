@@ -1,7 +1,5 @@
 import pytest
-
 from process_memory import create_app
-from process_memory.db import get_db
 from process_memory.db import init_app
 
 
