@@ -5,7 +5,16 @@ from flask import current_app, g
 def init_app(app):
     app.teardown_appcontext(close_db_connection)
     with app.app_context():
-        get_database_name()
+        get_database()
+
+
+def get_database():
+    """
+    Get the current configured database. All configurations are on __init__.py: Check HOST and DATABASE_NAME.
+    :return: MongoClient connected to the configured host and database.
+    """
+    db = open_db_connection()
+    return db[current_app.config['DATABASE_NAME']]
 
 
 def open_db_connection():
@@ -21,12 +30,12 @@ def open_db_connection():
     return g.db
 
 
-def get_database_name():
-    db = open_db_connection()
-    return db[current_app.config['DATABASE_NAME']]
-
-
 def close_db_connection(e=None):
+    """
+    Close the database connection.
+    :param e: return value to global
+    :return: none
+    """
     db = g.pop('db', e)
 
     if db is not None:

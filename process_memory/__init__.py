@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from process_memory import db
-from . import instances, collection, history
+from . import instances, collection, history, memory
 
 
 def create_app(test_config=None):
@@ -15,9 +15,10 @@ def create_app(test_config=None):
         USER=os.getenv('DOCDB_USER', 'docdbadmin'),
         SECRET=os.getenv('DOCDB_SECRET', 'docdbadmin'),
         HOST=os.getenv('DOCDB_HOST', 'plataforma-docdb.cluster-czqebrnlxa8n.us-east-1.docdb.amazonaws.com'),
-        DATABASE_NAME=os.getenv('DOCDB_DATABASE_NAME', 'memory'),
+        DATABASE_NAME=os.getenv('DOCDB_DATABASE_NAME', 'platform_memory'),
         PORT=os.getenv('DOCDB_PORT', '27017'),
-        OPTIONS=os.getenv('DOCDB_OPTIONS', '?ssl=true&ssl_ca_certs=rds-combined-ca-bundle.pem&replicaSet=rs0')
+        OPTIONS=os.getenv('DOCDB_OPTIONS', '?ssl=true&ssl_ca_certs=rds-combined-ca-bundle.pem&replicaSet=rs0'),
+        MAX_DOC_SIZE=os.getenv('DOCUMENT_SIZE', 10000000)
     )
 
     if not test_config:
@@ -26,18 +27,20 @@ def create_app(test_config=None):
     else:
         # Load the test config if passed in
         app.config.from_mapping(test_config)
-    
+
+    # Connects to database
     db.init_app(app)
 
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
-
     @app.route('/')
-    def testdb():
-        mydb = db.open_db_connection()
-        return str(f"Database TEST: {mydb.test}")
+    def hello():
+        return 'Hello, World! The application is running.'
 
+    @app.route('/hello')
+    def test_db():
+        current_db = db.open_db_connection()
+        return str(f"Hello! This is the current configured database: {current_db.test}")
+
+    app.register_blueprint(memory.bp)
     app.register_blueprint(instances.bp)
     app.register_blueprint(collection.bp)
     app.register_blueprint(history.bp)

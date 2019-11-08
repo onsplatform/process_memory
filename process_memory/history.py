@@ -3,7 +3,7 @@ from flask_api import status
 import util
 from pymongo import ASCENDING
 
-from process_memory.db import get_database_name
+from process_memory.db import get_database
 
 bp = Blueprint('history', __name__)
 
@@ -24,7 +24,7 @@ def get_history_since(instance_id, number_of_documents):
 	"""
 	Lists the first n documents, from oldest to newest.
 	"""
-	app_db = get_database_name()
+	app_db = get_database()
 	app_collection = app_db.get_collection(str(instance_id))
 	history_documents = app_collection.find().sort('timestamp', ASCENDING).limit(number_of_documents)
 	return make_response(util.create_document(history_documents), status.HTTP_200_OK)

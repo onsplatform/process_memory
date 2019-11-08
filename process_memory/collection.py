@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, make_response
 from flask_api import status
-from process_memory.db import get_database_name
+from process_memory.db import get_database
 from pymongo import ASCENDING
 import util
 
@@ -17,7 +17,7 @@ def post_collection(collection: str):
     posted_document = request.get_json()
     #import pdb; pdb.set_trace()
     if posted_document:
-        db = get_database_name()
+        db = get_database()
         app_collection = db.get_collection(str(collection))
 
         document = util.create_document(posted_document)
@@ -43,7 +43,7 @@ def get_collection(collection: str):
     """
     collection_filter = request.get_json()
     if collection_filter:
-        db = get_database_name()
+        db = get_database()
         app_collection = db.get_collection(str(collection)).find(filter=collection_filter)
 
         if app_collection.count() > 0:
@@ -69,7 +69,7 @@ def replace_collection(collection):
     :return: Dictionary with either the old document or empty.
     """
     if request.data:
-        db = get_database_name()
+        db = get_database()
         app_collection = db.get_collection(str(collection))
 
         finder = request.get_json().get('filter')
