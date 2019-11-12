@@ -8,6 +8,12 @@ def create_document(body):
 	return {**header, **body}
 
 
+def include_header(header: dict, body):
+	new_header = header
+	new_header.update({"timestamp": datetime.utcnow()})
+	return {**new_header, **body}
+
+
 def prepare_document(body, **kwargs):
 	"""	Prepare document for persistance."""
 	header = {
@@ -19,23 +25,17 @@ def prepare_document(body, **kwargs):
 
 def compress(data: bytes):
 	"""
-	Compresses data with default encoding UTF-8. We currently use Google´s Snappy.
-	:param data: bytes that should be compressed.
+	Compresses data with default encoding UTF-8. We currently use Google´s Snappy (it´s fast).
+	:param data: bytes that are going to be compressed.
 	:return: bytes compressed by algorithm.
 	"""
 	return snappy.compress(data, 'utf-8')
 
 
-
-"""
-TODO: criar um cabeçalho único para os documentos. O cabeçalho será responsável pelo match dentro do MongoDB
-TODO: criar método para extração de json para cada coleção. Vamos receber um único json com vários documentos.
-
-	"processId": "4c7735de-6992-4c1a-ab73-e4114b2da42a",
-	"systemId": "a22d9e4d-c352-4ac2-8321-2c496fe3a116",
-	"instanceId": "c1996da1-ae96-4e99-9b80-bec749d2d67c",
-	"eventOut": "confirmar.estruturacao.cenario.request.done",
-	"commit": true
-"""
-
-
+def uncompress(data: bytes):
+	"""
+	Uncompresses data from repository. Using Google´s Snappy (it´s very fast).
+	:param data: bytes that have been compressed
+	:return: bytes decompressed by algorithm.
+	"""
+	return snappy.uncompress(data)

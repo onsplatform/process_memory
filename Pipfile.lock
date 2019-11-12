@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "5b33e39f437006b87341890c07cf423bb02e65feba2c02271150380743d26bda"
+            "sha256": "10adf3863539dd604f7f125fe7561a31843f169d040274c085ef0017ca04723d"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -146,10 +146,9 @@
         "python-snappy": {
             "hashes": [
                 "sha256:9c0ba725755b749ef9b03f6ed7582cefb957c0d9f6f064a7c4314148a9dbdb61",
-                "sha256:d9c26532cfa510f45e8d135cde140e8a5603d3fb254cfec273ebc0ecf9f668e2",
-                "sha256:fc25205ba8f42ff43759ed18c557f536275df22035f5f5dc2cd6986acc87657b"
+                "sha256:d9c26532cfa510f45e8d135cde140e8a5603d3fb254cfec273ebc0ecf9f668e2"
             ],
-            "path": "./python_snappy-0.5.4-cp37-cp37m-win32.whl",
+            "index": "pypi",
             "version": "==0.5.4"
         },
         "werkzeug": {
@@ -233,6 +232,14 @@
             ],
             "index": "pypi",
             "version": "==5.2.2"
+        },
+        "python-snappy": {
+            "hashes": [
+                "sha256:9c0ba725755b749ef9b03f6ed7582cefb957c0d9f6f064a7c4314148a9dbdb61",
+                "sha256:d9c26532cfa510f45e8d135cde140e8a5603d3fb254cfec273ebc0ecf9f668e2"
+            ],
+            "index": "pypi",
+            "version": "==0.5.4"
         },
         "six": {
             "hashes": [

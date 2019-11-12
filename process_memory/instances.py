@@ -33,9 +33,7 @@ def instance(instance_id):
     """
     db = get_database()
     app_collection = db.get_collection(str(instance_id))
-    size = request.content_length
-    import pdb; pdb.set_trace()
-    print(size)
+    # import pdb; pdb.set_trace()
     if request.method == 'POST' and request.data:
         document = util.create_document(request.get_json())
         # persist document
