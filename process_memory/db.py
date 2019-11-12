@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 from flask import current_app, g
+import gridfs
 
 
 def init_app(app):
@@ -15,6 +16,11 @@ def get_database():
     """
     db = open_db_connection()
     return db[current_app.config['DATABASE_NAME']]
+
+
+def get_grid_fs():
+    db = get_database()
+    return gridfs.GridFS(db)
 
 
 def open_db_connection():

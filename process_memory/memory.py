@@ -1,10 +1,8 @@
-from flask import Blueprint, request, jsonify, make_response
+from flask import Blueprint, request, make_response, current_app
 from flask_api import status
-from bson.json_util import dumps
-import util
-from process_memory.db import get_database
-from pymongo import ASCENDING, DESCENDING
+from process_memory.db import get_database, get_grid_fs
 
+from util import compress
 
 bp = Blueprint('memory', __name__)
 
@@ -23,12 +21,14 @@ def create_memory(instance_id):
     :param instance_id: UUID or GUID provided by the client app.
     :return:
     """
-    # Get the document size.
     doc_size = request.content_length
-    # TODO: check if the size is above 10 million bytes.
-    if request.data and request.content_length > 10000000:
-        doc_size = 10000000
-
+    # Check if there is a document and its size is above 12 million bytes.
+    if request.data and request.content_length > 12000000:
+        # Compress the data > Connect to GridFS > Save File with instance_id name > Get unique file Id.
+        compressed_data = compress(request.data)
+        fs = get_grid_fs()
+        file_id = fs.put(compressed_data, filename=str(instance_id))
+    """
     db = get_database()
     app_collection = db.get_collection(str(instance_id))
 
@@ -37,8 +37,9 @@ def create_memory(instance_id):
         # persist document
         post_id = app_collection.insert_one(document).inserted_id
         app_collection.create_index([("timestamp", ASCENDING)])
+    """
+    return make_response("Original Data size: " + str(doc_size), status.HTTP_200_OK)
 
-    return make_response(str(doc_size), status.HTTP_200_OK)
 
 """
 TODO: insert a document into memory

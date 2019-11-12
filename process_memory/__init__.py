@@ -18,7 +18,7 @@ def create_app(test_config=None):
         DATABASE_NAME=os.getenv('DOCDB_DATABASE_NAME', 'platform_memory'),
         PORT=os.getenv('DOCDB_PORT', '27017'),
         OPTIONS=os.getenv('DOCDB_OPTIONS', '?ssl=true&ssl_ca_certs=rds-combined-ca-bundle.pem&replicaSet=rs0'),
-        MAX_DOC_SIZE=os.getenv('DOCUMENT_SIZE', 10000000)
+        MAX_DOC_SIZE=os.getenv('DOCUMENT_SIZE', 15000000)
     )
 
     if not test_config:

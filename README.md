@@ -17,15 +17,42 @@ Use a Document Database, MongoDB 3.6 compatible and proceed to create the databa
 You need to configure the environment variables to activate the service. They have default values that should be only
 used for development.
 
+### Libraries
+
+Make sure the development environment has been correctly configured. 
+If you get errors like *fatal error: Python.h: No such file or directory* you may be missing development packages.
+
+```shell script
+sudo apt install libpython3.7-dev python3.7-dev
+sudo apt-get install -y libsnappy-dev
+```
+
+O Windows, you need to install the provided whl snappy file. Below, the file is for Python 3.7 32-bit.
+If you need other versions, download them from <https://www.lfd.uci.edu/~gohlke/pythonlibs/#python-snappy>
+```shell script
+pip install python_snappy-0.5.4-cp37-cp37m-win_amd32.whl
+```
+
+Then, install it on your virtual environment (VE). Make sure you are in the correct VE folder.
+```shell script
+pipenv shell
+pipenv install python_snappy-0.5.4-cp37-cp37m-win_amd32.whl
+```
+
+
 ### DOCDB        
+
+The process memory uses a document database repository to save its data. These are the environment variables that 
+should be used to correctly configure the service:
         
 - **DOCDB_USER**: database username;
 - **DOCDB_SECRET**: database password;
 - **DOCDB_HOST**: database server address;
 - **DOCDB_COLLECTION**: default collection that you want to access;
 - **DOCDB_OPTIONS**: these are other configuration options necessary to connect.
+- **DOCDB_MAX_DATA**: the maximum accepted value for this is 16 million bytes.
 
-Folow the examples below for all of the listed above.
+Follow the examples below for all of the listed above.
 
 **Linux**
 

@@ -1,4 +1,5 @@
 from datetime import datetime
+import snappy
 
 
 def create_document(body):
@@ -15,6 +16,17 @@ def prepare_document(body, **kwargs):
 	}
 	return {**header, **body}
 
+
+def compress(data: bytes):
+	"""
+	Compresses data with default encoding UTF-8. We currently use Google´s Snappy.
+	:param data: bytes that should be compressed.
+	:return: bytes compressed by algorithm.
+	"""
+	return snappy.compress(data, 'utf-8')
+
+
+
 """
 TODO: criar um cabeçalho único para os documentos. O cabeçalho será responsável pelo match dentro do MongoDB
 TODO: criar método para extração de json para cada coleção. Vamos receber um único json com vários documentos.
@@ -25,3 +37,5 @@ TODO: criar método para extração de json para cada coleção. Vamos receber u
 	"eventOut": "confirmar.estruturacao.cenario.request.done",
 	"commit": true
 """
+
+
