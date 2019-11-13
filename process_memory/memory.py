@@ -3,10 +3,11 @@ from flask_api import status
 from process_memory.db import get_database, get_grid_fs
 import sys
 import util
+import json
 
 bp = Blueprint('memory', __name__)
 
-MAX_BYTES = 12000000
+MAX_BYTES = 120000000
 
 # TODO: read the latest document from memory
 @bp.route("/memory/<uuid:instance_id>/head")
@@ -22,30 +23,48 @@ def create_memory(instance_id):
     :param instance_id: UUID or GUID provided by the client app.
     :return:
     """
+    json_data: dict
     if request.data:
-        json_data: dict = request.get_json()
+        json_data = request.get_json()
         # Extract the payload into memories. Create a header to link them all.
-        event_memory = json_data.pop('event')
-        map_memory = json_data.pop('map')
-        dataset_memory = json_data.pop('dataset')
-        header = json_data
+        event_memory: dict = json_data.pop('event')
+        map_memory: dict = json_data.pop('map')
+        dataset_memory: dict = json_data.pop('dataset')
+        header: dict = json_data
 
-        # Include header in all memories. They will be linked by it.
-        event_memory = util.include_header(header, event_memory)
-        map_memory = util.include_header(header, map_memory)
-        dataset_memory = util.include_header(header, dataset_memory)
-
-        # If data is smaller than 15 million bytes
+        # If all data is smaller than 15 million bytes (most cases)
         if request.content_length < MAX_BYTES:
-            db = get_database()
+            # Include header in all memories. They will be linked by it.
+            event_memory = util.include_header(header, event_memory)
+            map_memory = util.include_header(header, map_memory)
+            dataset_memory = util.include_header(header, dataset_memory)
+
+            # Insert data
+            _memory_insert('events', event_memory)
+            _memory_insert('maps', map_memory)
+            _memory_insert('dataset', dataset_memory)
+
+            # Everything OK! Confirm all collections are saved.
+            return make_response('Success', status.HTTP_201_CREATED)
+
+        # Special treatment for large files.
+        # Now, we check which parts are really large (above 15 million bytes) and save them to file.
+        db = get_database()
+        fs = get_grid_fs()
+        if sys.getsizeof(event_memory) < MAX_BYTES:
             db['events'].insert_one(event_memory)
+
+        if sys.getsizeof(map_memory) < MAX_BYTES:
             db['maps'].insert_one(map_memory)
-            db['datasets'].insert_one(dataset_memory)
 
-        # Apenas MongoDB 4.x ou maior tem transação entre collections. Construir transação entre collections.
+        # sys.getsizeof(map_memory)
+        # sys.getsizeof(dataset_memory)
+        mydata = request.data
+        new_memory = bytes(json.dumps(event_memory), 'utf-8')
 
-    doc_size = request.content_length
-    # Check if there is a document and its size is above 12 million bytes.
+        event_memory = util.include_header(header, util.compress(json.dumps(event_memory)))
+        fs = get_grid_fs()
+
     if request.data and request.content_length > MAX_BYTES:
         # Compress the data > Connect to GridFS > Save File with instance_id name > Get unique file Id.
         compressed_data = util.compress(request.data)
@@ -54,6 +73,12 @@ def create_memory(instance_id):
 
     return make_response("From (bytes): " + str(doc_size) + " To (bytes): " + str(sys.getsizeof(compressed_data)) +
                          "\nNew file id: " + str(file_id), status.HTTP_200_OK)
+
+
+def _memory_insert(collection: str, data: dict):
+    db = get_database()
+    result = db[collection].insert_one(data)
+    return result.inserted_id
 
 
 def _create_header():
