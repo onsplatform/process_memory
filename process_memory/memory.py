@@ -7,21 +7,16 @@ import json
 
 bp = Blueprint('memory', __name__)
 
-MAX_BYTES = 120000000
+MAX_BYTES = 12000000
 
 # TODO: read the latest document from memory
-@bp.route("/memory/<uuid:instance_id>/head")
-def find_head(instance_id):
-    return instance_id
-
-
 @bp.route("/memory/<uuid:instance_id>", methods=['POST'])
 @bp.route("/memory/<uuid:instance_id>/commit", methods=['POST'])
 def create_memory(instance_id):
     """
     Creates a memory of the provided json file with the provided key.
     :param instance_id: UUID or GUID provided by the client app.
-    :return:
+    :return: HTTP_STATUS
     """
     json_data: dict
     if request.data:
@@ -47,56 +42,56 @@ def create_memory(instance_id):
             # Everything OK! Confirm all collections are saved.
             return make_response('Success', status.HTTP_201_CREATED)
 
-        # Special treatment for large files.
-        # Now, we check which parts are really large (above 15 million bytes) and save them to file.
-        db = get_database()
-        fs = get_grid_fs()
-        if sys.getsizeof(event_memory) < MAX_BYTES:
-            db['events'].insert_one(event_memory)
+    # Todo: Special treatment for large files.
+    return make_response("There is no data in the request.", status.HTTP_417_EXPECTATION_FAILED)
 
-        if sys.getsizeof(map_memory) < MAX_BYTES:
-            db['maps'].insert_one(map_memory)
 
-        # sys.getsizeof(map_memory)
-        # sys.getsizeof(dataset_memory)
-        mydata = request.data
-        new_memory = bytes(json.dumps(event_memory), 'utf-8')
-
-        event_memory = util.include_header(header, util.compress(json.dumps(event_memory)))
-        fs = get_grid_fs()
-
-    if request.data and request.content_length > MAX_BYTES:
-        # Compress the data > Connect to GridFS > Save File with instance_id name > Get unique file Id.
-        compressed_data = util.compress(request.data)
-        fs = get_grid_fs()
-        file_id = fs.put(compressed_data, filename=str(instance_id)+".snappy", metadata=_create_header())
-
-    return make_response("From (bytes): " + str(doc_size) + " To (bytes): " + str(sys.getsizeof(compressed_data)) +
-                         "\nNew file id: " + str(file_id), status.HTTP_200_OK)
+@bp.route("/memory/<uuid:instance_id>/head")
+def find_head(instance_id):
+    return instance_id
 
 
 def _memory_insert(collection: str, data: dict):
+    """
+    Inserts a new document object into the database
+    :param collection: The collection that the document belongs and should be saved to.
+    :param data: The data (dictionary) to save.
+    :return: Document Object ID.
+    """
+    try:
+        if sys.getsizeof(data) > MAX_BYTES:
+            raise ValueError("Document is too large. Use memory_file_insert if object is above " + str(MAX_BYTES))
+        db = get_database()
+        result = db[collection].insert_one(data)
+        return result.inserted_id
+    except ValueError as ve:
+        print(ve)
+
+
+def _memory_file_insert(data: bytes, instance_id: str, header: dict):
+    """
+    Inserts a new document as a compressed file into the database.
+    :param data: The data (bytes) to be compressed and inserted.
+    :param instance_id: The instance_id to which this record belongs to.
+    :param header: Header is data to identify the file. It will be saved as metadata.
+    :return: Tuple with (File Object ID, File name).
+    """
+    assert (type(data) == bytes)
+    compressed_data = util.compress(data)
+    file_name = instance_id + ".snappy"
+    fs = get_grid_fs()
+    file_id = fs.put(compressed_data, filename=file_name, metadata=header)
+    return file_id, file_name
+
+
+def _memory_save(collection: str, data: dict):
+    # 1. recebe uma coleção qualquer para inserir
+    # 2. testa essa coleção para tamanho. Se for pequena, save comum.
+    # 3. se for grande, obter o payload, comprimir ele, salvar o arquivo primeiro.
+    # 4. junto com o salvamento do arquivo, salvar o header dentro do meta data do arquivo. Assim, o mesmo
+    # pode ser encontrado tanto de forma direta pelo gridfs quanto pela coleção em que ele deveria pertencer.
+    # 5. obter o id e o nome do arquivo, incluir no header e salvar eles como um documento comum.
+    #
     db = get_database()
     result = db[collection].insert_one(data)
     return result.inserted_id
-
-
-def _create_header():
-    header = {
-        "processId": "4c7735de-6992-4c1a-ab73-e4114b2da42a",
-        "systemId": "a22d9e4d-c352-4ac2-8321-2c496fe3a116",
-        "instanceId": "c1996da1-ae96-4e99-9b80-bec749d2d67c",
-        "eventOut": "confirmar.estruturacao.cenario.request.done",
-        "commit": True
-    }
-
-    return header
-
-"""
-TODO: insert a document into memory
-
-TODO: use GRIDFS if post size is larger than 10 MB. Compact json file before saving.
-TODO: will need 3 create functions: create_map, create_event, create_dataset
-TODO: will need 3 get functions: get_map, get_event, get_dataset¹
-TODO: ¹get_dataset will have to deal with gzip compression and decompression for the >400MB sets.
-"""
