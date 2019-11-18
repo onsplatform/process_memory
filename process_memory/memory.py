@@ -3,11 +3,11 @@ from flask_api import status
 from process_memory.db import get_database, get_grid_fs
 import sys
 import util
-import json
+
 
 bp = Blueprint('memory', __name__)
 
-MAX_BYTES = 12000000
+MAX_BYTES = 1200
 
 # TODO: read the latest document from memory
 @bp.route("/memory/<uuid:instance_id>", methods=['POST'])
@@ -19,6 +19,9 @@ def create_memory(instance_id):
     :return: HTTP_STATUS
     """
     json_data: dict
+    large_request: bool = False
+    if request.content_length > MAX_BYTES:
+        large_request = True
     if request.data:
         json_data = request.get_json()
         # Extract the payload into memories. Create a header to link them all.
@@ -27,20 +30,19 @@ def create_memory(instance_id):
         dataset_memory: dict = json_data.pop('dataset')
         header: dict = json_data
 
-        # If all data is smaller than 15 million bytes (most cases)
-        if request.content_length < MAX_BYTES:
-            # Include header in all memories. They will be linked by it.
-            event_memory = util.include_header(header, event_memory)
-            map_memory = util.include_header(header, map_memory)
-            dataset_memory = util.include_header(header, dataset_memory)
+        # if request.content_length > MAX_BYTES:
+        # Include header in all memories. They will be linked by it.
+        event_memory = util.include_header(header, event_memory)
+        map_memory = util.include_header(header, map_memory)
+        dataset_memory = util.include_header(header, dataset_memory)
 
-            # Insert data
-            _memory_insert('events', event_memory)
-            _memory_insert('maps', map_memory)
-            _memory_insert('dataset', dataset_memory)
+        # Insert data
+        _memory_save(instance_id, collection='events', memory_header=header, data=event_memory)
+        _memory_save(instance_id, collection='maps', memory_header=header, data=map_memory)
+        _memory_save(instance_id, collection='dataset', memory_header=header, data=dataset_memory)
 
-            # Everything OK! Confirm all collections are saved.
-            return make_response('Success', status.HTTP_201_CREATED)
+        # Everything OK! Confirm all collections are saved.
+        return make_response('Success', status.HTTP_201_CREATED)
 
     # Todo: Special treatment for large files.
     return make_response("There is no data in the request.", status.HTTP_417_EXPECTATION_FAILED)
@@ -68,15 +70,15 @@ def _memory_insert(collection: str, data: dict):
         print(ve)
 
 
-def _memory_file_insert(data: bytes, instance_id: str, header: dict):
+def _memory_file_insert(instance_id: str, header: dict, data: bytes):
     """
-    Inserts a new document as a compressed file into the database.
+    Inserts a new document as a compressed file into the database. Header will be saved as metadata.
     :param data: The data (bytes) to be compressed and inserted.
     :param instance_id: The instance_id to which this record belongs to.
     :param header: Header is data to identify the file. It will be saved as metadata.
     :return: Tuple with (File Object ID, File name).
     """
-    assert (type(data) == bytes)
+    assert (type(data) is bytes), "For file compression and saving, data should be bytes."
     compressed_data = util.compress(data)
     file_name = instance_id + ".snappy"
     fs = get_grid_fs()
@@ -84,14 +86,21 @@ def _memory_file_insert(data: bytes, instance_id: str, header: dict):
     return file_id, file_name
 
 
-def _memory_save(collection: str, data: dict):
-    # 1. recebe uma coleção qualquer para inserir
-    # 2. testa essa coleção para tamanho. Se for pequena, save comum.
-    # 3. se for grande, obter o payload, comprimir ele, salvar o arquivo primeiro.
-    # 4. junto com o salvamento do arquivo, salvar o header dentro do meta data do arquivo. Assim, o mesmo
-    # pode ser encontrado tanto de forma direta pelo gridfs quanto pela coleção em que ele deveria pertencer.
-    # 5. obter o id e o nome do arquivo, incluir no header e salvar eles como um documento comum.
-    #
-    db = get_database()
-    result = db[collection].insert_one(data)
-    return result.inserted_id
+def _memory_save(instance_uuid: str, collection: str, memory_header: dict, data: dict):
+    """
+    Function to save the data into memory.
+    :param instance_uuid:
+    :param collection:
+    :param memory_header:
+    :param data:
+    :return:
+    """
+    if sys.getsizeof(data) > MAX_BYTES:
+        data_bytes = util.convert_to_bytes(data)
+        # Insert a file with header information inside the metadata field. Update header with the file info.
+        file_id, file_name = _memory_file_insert(data_bytes, instance_id=instance_uuid, header=memory_header)
+        memory_header.update({"file_id": file_id, "file_name": file_name})
+        # Insert a record into the correct collection, with a reference to a file with the large payload.
+        return _memory_insert(collection, memory_header)
+
+    return _memory_insert(collection, data)

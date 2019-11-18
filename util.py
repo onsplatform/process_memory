@@ -1,5 +1,6 @@
 from datetime import datetime
 import snappy
+import json
 
 
 def create_document(body):
@@ -39,3 +40,7 @@ def uncompress(data: bytes):
 	:return: bytes decompressed by algorithm.
 	"""
 	return snappy.uncompress(data)
+
+
+def convert_to_bytes(dictionary: dict):
+	return json.dumps(dictionary)
