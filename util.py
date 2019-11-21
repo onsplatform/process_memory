@@ -1,6 +1,7 @@
 from datetime import datetime
 import snappy
 import json
+from bson import json_util
 
 
 def create_document(body):
@@ -42,5 +43,10 @@ def uncompress(data: bytes):
 	return snappy.uncompress(data)
 
 
-def convert_to_bytes(dictionary: dict):
-	return json.dumps(dictionary)
+def convert_to_bytes(dictionary_data: dict):
+	"""
+	Receives a dictionary data and converts to an UTF-8, BSON compatible bytes array.
+	:param dictionary_data: An object in the form of a dictionary.
+	:return: bytes encoded in UTF-8 and BSON compatible.
+	"""
+	return json.dumps(dictionary_data, default=json_util.default).encode('utf-8')
