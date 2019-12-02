@@ -23,11 +23,13 @@ Make sure the development environment has been correctly configured.
 If you get errors like *fatal error: Python.h: No such file or directory* you may be missing development packages.
 
 ```shell script
-sudo apt install libpython3.7-dev python3.7-dev
+sudo apt install -y libpython3.7-dev python3.7-dev
 sudo apt-get install -y libsnappy-dev
 ```
 
-O Windows, you need to install the provided whl snappy file. Below, the file is for Python 3.7 32-bit.
+**Windows**
+
+You need to install the provided whl snappy file. Below, the file is for Python 3.7 32-bit.
 If you need other versions, download them from <https://www.lfd.uci.edu/~gohlke/pythonlibs/#python-snappy>
 ```shell script
 pip install python_snappy-0.5.4-cp37-cp37m-win_amd32.whl

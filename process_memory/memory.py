@@ -3,13 +3,15 @@ from flask_api import status
 from process_memory.db import get_database, get_grid_fs
 import sys
 import util
+from pymongo import ASCENDING, DESCENDING
+from bson.json_util import dumps
 
 bp = Blueprint('memory', __name__)
 
 MAX_BYTES: int = 16000000
 DATA_SIZE: int = None
 
-# TODO: read the latest document from memory
+
 @bp.route("/memory/<uuid:instance_id>", methods=['POST'])
 @bp.route("/memory/<uuid:instance_id>/commit", methods=['POST'])
 def create_memory(instance_id):
@@ -23,19 +25,20 @@ def create_memory(instance_id):
         DATA_SIZE = request.content_length
         json_data: dict = request.get_json()
         # Extract the payload into memories. Create a header to link them all.
-        event_memory: dict = json_data.pop('event')
-        map_memory: dict = json_data.pop('map')
-        dataset_memory: dict = json_data.pop('dataset')
+        event_memory: dict = json_data.pop('event', None)
+        map_memory: dict = json_data.pop('map', None)
+        dataset_memory: dict = json_data.pop('dataset', None)
         header: dict = json_data
 
         # Include header in all memories. They will be linked by it.
-        event_memory = util.include_header(header, event_memory)
-        map_memory = util.include_header(header, map_memory)
-        dataset_memory = util.include_header(header, dataset_memory)
-
         # Insert data
+        event_memory = util.include_header(header, event_memory)
         _memory_save(instance_id, collection='events', memory_header=header, data=event_memory)
+
+        map_memory = util.include_header(header, map_memory)
         _memory_save(instance_id, collection='maps', memory_header=header, data=map_memory)
+
+        dataset_memory = util.include_header(header, dataset_memory)
         _memory_save(instance_id, collection='dataset', memory_header=header, data=dataset_memory)
 
         # Everything OK! Confirm all collections are saved.
@@ -43,9 +46,22 @@ def create_memory(instance_id):
 
     return make_response("There is no data in the request.", status.HTTP_417_EXPECTATION_FAILED)
 
-
+# TODO: read the latest document from memory
 @bp.route("/memory/<uuid:instance_id>/head")
 def find_head(instance_id):
+    """
+    Finds and returns the entire data collection for that particular instance id.
+    :param instance_id: UUID with the desired instance id.
+    :return:
+    """
+    head_query = {"instanceId": str(instance_id)}
+    db = get_database()
+    event_memory = db['events'].find(head_query).sort('timestamp', DESCENDING)
+    map_memory = db['maps'].find(head_query).sort('timestamp', DESCENDING)
+    dataset_memory = db['dataset'].find(head_query).sort('timestamp', DESCENDING)
+
+    teste = dumps(event_memory)
+
     return instance_id
 
 
@@ -91,7 +107,7 @@ def _memory_save(instance_uuid: str, collection: str, memory_header: dict, data:
     :param data: Payload to save, the usable data.
     :return: Object ID.
     """
-    # check object size
+    # check object size and proceed to compress and use gridfs
     if DATA_SIZE > MAX_BYTES:
         data_bytes = util.convert_to_bytes(data)
         # Insert a file with header information inside the metadata field. Update header with the file info.
