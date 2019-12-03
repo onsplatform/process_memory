@@ -4,7 +4,7 @@ from process_memory.db import get_database, get_grid_fs
 import sys
 import util
 from pymongo import ASCENDING, DESCENDING
-from bson.json_util import dumps
+from bson.json_util import dumps, loads, CANONICAL_JSON_OPTIONS
 
 bp = Blueprint('memory', __name__)
 
@@ -23,11 +23,13 @@ def create_memory(instance_id):
     if request.data:
         global DATA_SIZE
         DATA_SIZE = request.content_length
-        json_data: dict = request.get_json()
+        json_data: dict = loads(request.data, json_options=CANONICAL_JSON_OPTIONS)
+
         # Extract the payload into memories. Create a header to link them all.
-        event_memory: dict = json_data.pop('event', None)
-        map_memory: dict = json_data.pop('map', None)
-        dataset_memory: dict = json_data.pop('dataset', None)
+        event_memory: dict = {'event': json_data.pop('event', None)}
+        map_memory: dict = {'map': json_data.pop('map', None)}
+        dataset_memory: dict = {'dataset': json_data.pop('dataset', None)}
+        fork_memory: dict = {'fork': json_data.pop('fork', None)}
         header: dict = json_data
 
         # Include header in all memories. They will be linked by it.
@@ -41,12 +43,15 @@ def create_memory(instance_id):
         dataset_memory = util.include_header(header, dataset_memory)
         _memory_save(instance_id, collection='dataset', memory_header=header, data=dataset_memory)
 
+        fork_memory = util.include_header(header, fork_memory)
+        _memory_save(instance_id, collection='fork', memory_header=header, data=fork_memory)
+
         # Everything OK! Confirm all collections are saved.
         return make_response('Success', status.HTTP_201_CREATED)
 
     return make_response("There is no data in the request.", status.HTTP_417_EXPECTATION_FAILED)
 
-# TODO: read the latest document from memory
+
 @bp.route("/memory/<uuid:instance_id>/head")
 def find_head(instance_id):
     """
@@ -54,15 +59,16 @@ def find_head(instance_id):
     :param instance_id: UUID with the desired instance id.
     :return:
     """
-    head_query = {"instanceId": str(instance_id)}
+    head_query = {"header.instanceId": str(instance_id)}
     db = get_database()
     event_memory = db['events'].find(head_query).sort('timestamp', DESCENDING)
     map_memory = db['maps'].find(head_query).sort('timestamp', DESCENDING)
     dataset_memory = db['dataset'].find(head_query).sort('timestamp', DESCENDING)
+    fork_memory = db['fork'].find(head_query).sort('timestamp', DESCENDING)
 
-    teste = dumps(event_memory)
+    result = event_memory, map_memory, dataset_memory, fork_memory
 
-    return instance_id
+    return make_response(dumps(result, json_options=CANONICAL_JSON_OPTIONS), status.HTTP_200_OK)
 
 
 def _memory_insert(collection: str, data: dict):

@@ -11,9 +11,9 @@ def create_document(body):
 
 
 def include_header(header: dict, body):
-	new_header = header
-	new_header.update({"timestamp": datetime.utcnow()})
-	return {**new_header, **body}
+	timestamped_header = {"header": header}
+	timestamped_header.update({"timestamp": datetime.utcnow()})
+	return {**timestamped_header, **body}
 
 
 def prepare_document(body, **kwargs):
