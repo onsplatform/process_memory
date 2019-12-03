@@ -52,6 +52,7 @@ def create_memory(instance_id):
     return make_response("There is no data in the request.", status.HTTP_417_EXPECTATION_FAILED)
 
 
+@bp.route("/memory/<uuid:instance_id>")
 @bp.route("/memory/<uuid:instance_id>/head")
 def find_head(instance_id):
     """
