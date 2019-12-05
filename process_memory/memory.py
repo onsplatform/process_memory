@@ -6,6 +6,7 @@ import util
 from pymongo import DESCENDING
 from bson.json_util import dumps, loads, CANONICAL_JSON_OPTIONS
 
+
 bp = Blueprint('memory', __name__)
 
 MAX_BYTES: int = 16000000
