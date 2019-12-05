@@ -6,7 +6,7 @@ verify_ssl = true
 [dev-packages]
 pytest = "*"
 # for windows development only.
-python-snappy = {path = "./lib/python_snappy-0.5.4-cp37-cp37m-win32.whl", platform_version = "== 'Windows'"}
+python-snappy = {path = "./lib/python_snappy-0.5.4-cp37-cp37m-win_amd64.whl",platform_version = "== 'Windows'"}
 
 [packages]
 flask = "*"
@@ -16,9 +16,10 @@ dnspython = "*"
 gunicorn = "*"
 python-snappy = "*"
 ctypes-snappy = "*"
+python-bsonjs = "*"
 
 [requires]
-python_version = "3.7"
+#python_version = "3.7"
 
 [pipenv]
 allow_prereleases = true

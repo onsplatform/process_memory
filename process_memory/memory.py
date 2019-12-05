@@ -1,9 +1,9 @@
-from flask import Blueprint, request, make_response, current_app
+from flask import Blueprint, request, make_response
 from flask_api import status
 from process_memory.db import get_database, get_grid_fs
 import sys
 import util
-from pymongo import ASCENDING, DESCENDING
+from pymongo import DESCENDING
 from bson.json_util import dumps, loads, CANONICAL_JSON_OPTIONS
 
 bp = Blueprint('memory', __name__)
@@ -24,6 +24,7 @@ def create_memory(instance_id):
         global DATA_SIZE
         DATA_SIZE = request.content_length
         json_data: dict = loads(request.data, json_options=CANONICAL_JSON_OPTIONS)
+        assert (type(json_data) is dict), "Method expects a dictionary and received: " + str(type(json_data))
 
         # Extract the payload into memories. Create a header to link them all.
         event_memory: dict = {'event': json_data.pop('event', None)}
@@ -67,9 +68,10 @@ def find_head(instance_id):
     dataset_memory = db['dataset'].find(head_query).sort('timestamp', DESCENDING)
     fork_memory = db['fork'].find(head_query).sort('timestamp', DESCENDING)
 
-    result = event_memory, map_memory, dataset_memory, fork_memory
+    data = event_memory, map_memory, dataset_memory, fork_memory
+    result = dumps(data)
 
-    return make_response(dumps(result, json_options=CANONICAL_JSON_OPTIONS), status.HTTP_200_OK)
+    return make_response(result, status.HTTP_200_OK)
 
 
 def _memory_insert(collection: str, data: dict):

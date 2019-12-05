@@ -29,16 +29,17 @@ sudo apt-get install -y libsnappy-dev
 
 **Windows**
 
-You need to install the provided whl snappy file. Below, the file is for Python 3.7 32-bit.
-If you need other versions, download them from <https://www.lfd.uci.edu/~gohlke/pythonlibs/#python-snappy>
+You need to install the provided whl snappy file. Below, the file is for Python 3.7 64-bit.
+If you need other versions, download them from <https://www.lfd.uci.edu/~gohlke/pythonlibs/#python-snappy>. 
+You have to point to where you saved the file:
 ```shell script
-pip install python_snappy-0.5.4-cp37-cp37m-win_amd32.whl
+pip install python_snappy-0.5.4-cp37-cp37m-win_amd64.whl
 ```
 
 Then, install it on your virtual environment (VE). Make sure you are in the correct VE folder.
 ```shell script
 pipenv shell
-pipenv install python_snappy-0.5.4-cp37-cp37m-win_amd32.whl
+pipenv install python_snappy-0.5.4-cp37-cp37m-win_amd64.whl
 ```
 
 
