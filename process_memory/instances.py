@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, make_response
 from flask_api import status
 from bson.json_util import dumps
 import util
-from process_memory.db import get_db_collection
+from process_memory.db import get_database
 from pymongo import ASCENDING, DESCENDING
 
 
@@ -15,7 +15,7 @@ def list_instances():
     Lists all the ids of the instances in the database.
     :return: list of json documents that contains the instances in the database collection.
     """
-    db = get_db_collection()
+    db = get_database()
     collection_list = db.list_collection_names()
 
     return make_response(dumps(collection_list), status.HTTP_200_OK)
@@ -31,9 +31,9 @@ def instance(instance_id):
     :param instance_id: The unique identifier of the instance.
     :return: list of instances, including the new ones.
     """
-    db = get_db_collection()
+    db = get_database()
     app_collection = db.get_collection(str(instance_id))
-   
+    # import pdb; pdb.set_trace()
     if request.method == 'POST' and request.data:
         document = util.create_document(request.get_json())
         # persist document
@@ -58,7 +58,7 @@ def find_head(instance_id):
     :param instance_id: unique instance identification
     :return: the latest (most recent) document in the given instance.
     """
-    db = get_db_collection()
+    db = get_database()
     app_collection = db.get_collection(str(instance_id))
     latest_document = app_collection.find().sort('timestamp', DESCENDING).limit(1)
 
@@ -72,7 +72,7 @@ def find_first(instance_id):
     :param instance_id: unique instance identification
     :return:
     """
-    db = get_db_collection()
+    db = get_database()
     app_collection = db.get_collection(str(instance_id))
     first_document = app_collection.find().sort('timestamp', direction=ASCENDING).limit(1)
 
@@ -87,7 +87,7 @@ def get_first_documents(instance_id, number_of_documents):
     :param number_of_documents:
     :return:
     """
-    db = get_db_collection()
+    db = get_database()
     # This is done to protect the database against large requests for no reason.
     if number_of_documents > 1000:
         number_of_documents = 1000
@@ -108,7 +108,7 @@ def clone_instance(from_instance_id, to_instance_id):
     :param to_instance_id: unique collection identification destination
     return: id of the new document inside the collection
     """
-    db = get_db_collection()
+    db = get_database()
     source_collection = db.get_collection(str(from_instance_id))
     projection_fields = {'_id': False}
 
@@ -120,13 +120,3 @@ def clone_instance(from_instance_id, to_instance_id):
     destination_document = destination_collection.insert_one(source_document[0])
 
     return make_response(str(destination_document.inserted_id), status.HTTP_201_CREATED)
-
-
-@bp.route("/instances/byEntities")
-def find_by_entities():
-    return NotImplemented
-
-
-@bp.route("/<uuid:instance_id>/event")
-def find_by_event(instance_id):
-    return NotImplemented

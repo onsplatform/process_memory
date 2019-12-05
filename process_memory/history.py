@@ -3,7 +3,7 @@ from flask_api import status
 import util
 from pymongo import ASCENDING
 
-from process_memory.db import get_db_collection
+from process_memory.db import get_database
 
 bp = Blueprint('history', __name__)
 
@@ -24,16 +24,7 @@ def get_history_since(instance_id, number_of_documents):
 	"""
 	Lists the first n documents, from oldest to newest.
 	"""
-	app_db = get_db_collection()
+	app_db = get_database()
 	app_collection = app_db.get_collection(str(instance_id))
 	history_documents = app_collection.find().sort('timestamp', ASCENDING).limit(number_of_documents)
 	return make_response(util.create_document(history_documents), status.HTTP_200_OK)
-
-
-@bp.route("/<uuid:instance_id>/history/last/<int:limit>")
-def get_history_until(instance_id, limit):
-	"""
-	Lists the last n documents, from most recent to the oldest. There is a hard limit of 1000 (one thousand) documents.
-	TODO: test if we should do this or just use the current contract.
-	"""
-	return status.HTTP_204_NO_CONTENT

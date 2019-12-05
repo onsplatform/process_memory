@@ -1,6 +1,3 @@
-import pytest
-
-from process_memory.db import get_db
 from flask_api import status
 
 

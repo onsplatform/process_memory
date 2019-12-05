@@ -1,30 +1,47 @@
-import pymongo
+from pymongo import MongoClient
 from flask import current_app, g
+import gridfs
 
 
-def get_db():
+def init_app(app):
+    app.teardown_appcontext(close_db_connection)
+    with app.app_context():
+        get_database()
+
+
+def get_database():
+    """
+    Get the current configured database. All configurations are on __init__.py: Check HOST and DATABASE_NAME.
+    :return: MongoClient connected to the configured host and database.
+    """
+    db = open_db_connection()
+    return db[current_app.config['DATABASE_NAME']]
+
+
+def get_grid_fs():
+    db = get_database()
+    return gridfs.GridFS(db)
+
+
+def open_db_connection():
     """ 
     Connect to database. First create the URI and then connect to it.
     Production params should come from a config file. Default values are provided for dev.
     """
-    uri = f"mongodb+srv://{current_app.config['USER']}:{current_app.config['SECRET_KEY']}@{current_app.config['DATABASE']}"
+    uri = f"mongodb://{current_app.config['USER']}:{current_app.config['SECRET']}@{current_app.config['HOST']}" \
+          f":{current_app.config['PORT']}/{current_app.config['OPTIONS']}"
+
     if 'db' not in g:
-        g.db = pymongo.MongoClient(uri)
+        g.db = MongoClient(uri)
     return g.db
 
 
-def init_app(app):
-    app.teardown_appcontext(close_db)
-    with app.app_context():
-        get_db_collection()
-
-
-def get_db_collection():
-    db = get_db()
-    return db[current_app.config['COLLECTION']]
-
-
-def close_db(e=None):
+def close_db_connection(e=None):
+    """
+    Close the database connection.
+    :param e: return value to global
+    :return: none
+    """
     db = g.pop('db', e)
 
     if db is not None:
