@@ -1,0 +1,37 @@
+
+upstream memory_server {
+  server unix:/var/www/memory/gunicorn.sock fail_timeout=0;
+}
+
+server {
+    listen   80;
+    server_name localhost;
+    proxy_connect_timeout 600;
+    proxy_send_timeout 600;
+    proxy_read_timeout 600;
+    send_timeout 600;
+
+    client_max_body_size 10M;
+
+    access_log /var/log/memory/nginx-access.log;
+    error_log /var/log/memory/nginx-error.log;
+
+    location /static/ {
+        alias   /var/www/memory/static/;
+    }
+
+    location /media/ {
+        alias   /var/www/memory/media/;
+    }
+
+    location / {
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+
+        if (!-f $request_filename) {
+            proxy_pass http://memory_server;
+            break;
+        }
+    }
+}

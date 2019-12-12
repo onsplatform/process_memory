@@ -3,7 +3,7 @@ FROM python:3.7-buster
 #
 # SETUP CONTAINER
 #
-RUN apt update -y && apt upgrade -y && apt install nginx git libpython3.7-dev python3.7-dev libsnappy-dev -y
+RUN apt-get update -y && apt-get upgrade -y && apt-get install nginx git libpython3.7-dev python3.7-dev libsnappy-dev -y
 
 EXPOSE 80
 
