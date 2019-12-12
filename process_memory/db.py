@@ -3,8 +3,13 @@ from flask import current_app, g
 import gridfs
 
 
+ROOT_PATH = None
+
+
 def init_app(app):
     app.teardown_appcontext(close_db_connection)
+    global ROOT_PATH
+    ROOT_PATH = app.root_path
     with app.app_context():
         get_database()
 
@@ -30,9 +35,8 @@ def open_db_connection():
     """
     uri = f"mongodb://{current_app.config['USER']}:{current_app.config['SECRET']}@{current_app.config['HOST']}" \
           f":{current_app.config['PORT']}/{current_app.config['OPTIONS']}"
-
     if 'db' not in g:
-        g.db = MongoClient(uri)
+        g.db = MongoClient(uri, ssl=True, ssl_ca_certs=f'{ROOT_PATH}/certs/rds-combined-ca-bundle.pem')
     return g.db
 
 
