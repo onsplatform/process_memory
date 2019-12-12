@@ -1,7 +1,8 @@
 import pytest
 from flask_api import status
 
-with open('process_memory.json', 'r') as memory_file:
+with open('/d/_PLATFORM/process_memory/process_memory/tests/process_memory.json', 'r') as memory_file:
+    print("Teste")
     info = memory_file.read()
 
 
