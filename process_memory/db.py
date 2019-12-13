@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 from flask import current_app, g
 import gridfs
-
+import ssl
 
 ROOT_PATH = None
 
