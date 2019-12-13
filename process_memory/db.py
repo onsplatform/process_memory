@@ -33,10 +33,14 @@ def open_db_connection():
     Connect to database. First create the URI and then connect to it.
     Production params should come from a config file. Default values are provided for dev.
     """
-    uri = f"mongodb://{current_app.config['USER']}:{current_app.config['SECRET']}@{current_app.config['HOST']}" \
-          f":{current_app.config['PORT']}/{current_app.config['OPTIONS']}"
+    uri = f"mongodb://{current_app.config['HOST']}:{current_app.config['PORT']}"
     if 'db' not in g:
-        g.db = MongoClient(uri, ssl=True, ssl_ca_certs=f'{ROOT_PATH}/certs/rds-combined-ca-bundle.pem')
+        g.db = MongoClient(uri,
+                           username=current_app.config['USER'],
+                           password=current_app.config['SECRET'],
+                           ssl=True,
+                           ssl_ca_certs=f'{ROOT_PATH}/certs/rds-combined-ca-bundle.pem',
+                           replicaSet=current_app.config['REPLICASET'])
     return g.db
 
 

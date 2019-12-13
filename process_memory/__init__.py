@@ -17,7 +17,7 @@ def create_app(test_config=None):
         HOST=os.getenv('DOCDB_HOST', 'plataforma-docdb.cluster-czqebrnlxa8n.us-east-1.docdb.amazonaws.com'),
         DATABASE_NAME=os.getenv('DOCDB_DATABASE_NAME', 'platform_memory'),
         PORT=os.getenv('DOCDB_PORT', '27017'),
-        OPTIONS=os.getenv('DOCDB_OPTIONS', f"?replicaSet=rs0"),
+        REPLICASET=os.getenv('DOCDB_REPLICASET', 'rs0'),
         MAX_DOC_SIZE=os.getenv('DOCUMENT_SIZE', 15000000)
     )
 
