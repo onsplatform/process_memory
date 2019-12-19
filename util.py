@@ -10,7 +10,7 @@ def create_document(body):
 	return {**header, **body}
 
 
-def include_header(header: dict, body):
+def include_header(header, body):
 	timestamped_header = {"header": header}
 	timestamped_header.update({"timestamp": datetime.utcnow()})
 	return {**timestamped_header, **body}

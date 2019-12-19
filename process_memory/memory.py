@@ -36,17 +36,13 @@ def create_memory(instance_id):
 
         # Include header in all memories. They will be linked by it.
         # Insert data
-        event_memory = util.include_header(header, event_memory)
-        _memory_save(instance_id, collection='events', memory_header=header, data=event_memory)
 
-        map_memory = util.include_header(header, map_memory)
-        _memory_save(instance_id, collection='maps', memory_header=header, data=map_memory)
-
-        dataset_memory = util.include_header(header, dataset_memory)
-        _memory_save(instance_id, collection='dataset', memory_header=header, data=dataset_memory)
-
-        fork_memory = util.include_header(header, fork_memory)
-        _memory_save(instance_id, collection='fork', memory_header=header, data=fork_memory)
+        header_id = _memory_save(collection='headers', header_id=None, data=header)
+        current_type = type(header_id)
+        _memory_save(collection='events', header_id=header_id, data=event_memory)
+        _memory_save(collection='maps', header_id=header_id, data=map_memory)
+        _memory_save(collection='dataset', header_id=header_id, data=dataset_memory)
+        _memory_save(collection='fork', header_id=header_id, data=fork_memory)
 
         # Everything OK! Confirm all collections are saved.
         return make_response('Success', status.HTTP_201_CREATED)
@@ -108,22 +104,14 @@ def _memory_file_insert(instance_uuid: str, header: dict, data: bytes, collectio
     return file_id
 
 
-def _memory_save(instance_uuid: str, collection: str, memory_header: dict, data: dict):
+def _memory_save(collection: str, header_id: object, data: dict):
     """
     Save a process memory.
-    :param instance_uuid: Unique ID, given by the application.
     :param collection: Collection (table) to save the data. Also used for filename.
-    :param memory_header: Header data used to find all the artifacts.
     :param data: Payload to save, the usable data.
     :return: Object ID.
     """
-    # check object size and proceed to compress and use gridfs
-    if DATA_SIZE > MAX_BYTES:
-        data_bytes = util.convert_to_bytes(data)
-        # Insert a file with header information inside the metadata field. Update header with the file info.
-        file_id = _memory_file_insert(instance_uuid, memory_header, data_bytes, collection)
-        memory_header.update({"file_id": file_id})
-        # Insert a record into the correct collection, with a reference to a file with the large payload.
-        return _memory_insert(collection, memory_header)
+    if header_id:
+        data = util.include_header(header_id, data)
 
     return _memory_insert(collection, data)
