@@ -4,6 +4,10 @@ import json
 from bson import json_util
 
 
+def get_time():
+	return datetime.utcnow()
+
+
 def create_document(body):
 	"""	Prepare document for persistance."""
 	header = {"timestamp": datetime.utcnow()}

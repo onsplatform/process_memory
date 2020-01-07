@@ -16,6 +16,7 @@ dnspython = "*"
 gunicorn = "*"
 ctypes-snappy = "*"
 python-snappy = "*"
+mongoengine = "*"
 
 [requires]
 python_version = "3.7"
