@@ -12,9 +12,9 @@ def create_app(test_config=None):
     """
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
-        USER=os.getenv('DOCDB_USER', 'docdbadmin'),
-        SECRET=os.getenv('DOCDB_SECRET', 'docdbadmin'),
-        HOST=os.getenv('DOCDB_HOST', 'plataforma-docdb.cluster-czqebrnlxa8n.us-east-1.docdb.amazonaws.com'),
+        USER=os.getenv('DOCDB_USER', ''),
+        SECRET=os.getenv('DOCDB_SECRET', ''),
+        HOST=os.getenv('DOCDB_HOST', ''),
         DATABASE_NAME=os.getenv('DOCDB_DATABASE_NAME', 'platform_memory'),
         PORT=os.getenv('DOCDB_PORT', '27017'),
         REPLICASET=os.getenv('DOCDB_REPLICASET', 'rs0'),

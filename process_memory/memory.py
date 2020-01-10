@@ -1,18 +1,18 @@
 from flask import Blueprint, request, make_response
 from flask_api import status
-from process_memory.db import get_database, get_grid_fs
 import sys
 import util
 from pymongo import DESCENDING
 from bson.json_util import dumps, loads, CANONICAL_JSON_OPTIONS
 from process_memory.dataset import *
-
+from process_memory.header import Header
 
 bp = Blueprint('memory', __name__)
 
 MAX_BYTES: int = 16000000
 DATA_SIZE: int = None
-LARGE_COLLECTIONS = ('usina', 'unidadegeradora', 'potenciauge', 'franquiauge', 'eventomudancaestadooperativo')
+LARGE_COLLECTIONS = ('unidadegeradora', 'potenciauge', 'franquiauge', 'eventomudancaestadooperativo')
+INSTANCE_HEADER = None
 
 
 @bp.route("/memory/<uuid:instance_id>", methods=['POST'])
@@ -26,7 +26,19 @@ def persist_memory(instance_id):
         json_data: dict = loads(request.data, json_options=CANONICAL_JSON_OPTIONS)
         assert (type(json_data) is dict), "Method expects a dictionary and received: " + str(type(json_data))
 
-        _persist(json_data)
+        # Extract the payload into memories. Create a header to link them all.
+        event: dict = {'event': json_data.pop('event', None)}
+        map: dict = {'map': json_data.pop('map', None)}
+        fork: dict = {'fork': json_data.pop('fork', None)}
+        dataset: dict = json_data.pop('dataset', None)
+        global INSTANCE_HEADER
+        INSTANCE_HEADER = json_data
+
+        # save event
+        # save map
+        # save fork
+        # Instantiate a new DataSet Schema
+        _persist_dataset(dataset)
 
         # Everything OK! Confirm all collections are saved.
         return make_response('Success', status.HTTP_201_CREATED)
@@ -34,43 +46,48 @@ def persist_memory(instance_id):
     return make_response("There is no data in the request.", status.HTTP_417_EXPECTATION_FAILED)
 
 
-def _persist(json_data):
-    # Extract the payload into memories. Create a header to link them all.
-    event: dict = {'event': json_data.pop('event', None)}
-    map: dict = {'map': json_data.pop('map', None)}
-    fork: dict = {'fork': json_data.pop('fork', None)}
-    dataset: dict = json_data.pop('dataset', None)
-    header: dict = _create_header(json_data)
-
-    # save event
-    # save map
-    # save fork
-
-    # TODO: Refactor this
-    # Instantiate a new DataSet Schema
-    _persist_dataset(dataset, header)
-
-
-def _persist_dataset(dataset: dict, header: dict):
-
+def _persist_dataset(dataset: dict):
+    """
+    Persist a new dataset and its dependencies.
+    :param dataset:
+    :param header:
+    :return:
+    """
     new_entity = Entities()
-    new_dataset = Dataset()
-    db = get_database()
-    for key, value in dataset.get('entities').items():
-        if value:
-            if key not in LARGE_COLLECTIONS:
-                new_entity[key] = value
-            else:
-                new_entity[key] = db[key].insert_many([{'header': header, 'data': item} for item in value]) \
-                    .inserted_ids
+    _bulk_insert(dataset, new_entity, 'entities')
 
-    # Create a Dataset and populate it
-    new_dataset.header = header
+    # Create a new Dataset and populate it
+    new_dataset = Dataset()
+    new_dataset.header = _create_header_object(INSTANCE_HEADER)
     new_dataset.entities = new_entity
     new_dataset.save()
 
 
-def _create_header(header):
+def _bulk_insert(from_collection: dict, to_collection: dict, payload: str):
+    """
+    Insert multiple data into
+    :param from_collection:
+    :param to_collection:
+    :param payload:
+    :return:
+    """
+    db = get_database()
+    for key, value in from_collection.get(payload).items():
+        if value:
+            if key not in LARGE_COLLECTIONS:
+                to_collection[key] = value
+            else:
+                to_collection[key] = db[key].insert_many(
+                    [{'header': INSTANCE_HEADER, 'data': item} for item in value]
+                ).inserted_ids
+
+
+def _create_header_object(header: dict):
+    """
+    Create an instance of Header(DynamicEmbeddedDocument) to be embedded in another class.
+    :param header: Dictionary containing the data that should be used as composite primary key for documents.
+    :return: instance of Dataset.Header(DynamicEmbeddedDocument)
+    """
     new_header = Header()
     new_header.instanceId = header.get('instanceId')
     new_header.processId = header.get('processId')
@@ -137,6 +154,7 @@ def find_head(instance_id):
 
 def _memory_insert(collection: str, data: dict):
     """
+    !DEPRECATED!
     Inserts a new document object into the database
     :param collection: The collection that the document belongs and should be saved to.
     :param data: The data (dictionary) to save.
@@ -154,6 +172,7 @@ def _memory_insert(collection: str, data: dict):
 
 def _memory_file_insert(instance_uuid: str, header: dict, data: bytes, collection: str):
     """
+    !DEPRECATED!
     Inserts a new document as a compressed file into the database. Header will be saved as metadata.
     :param data: The data (bytes) to be compressed and inserted.
     :param instance_uuid: The instance_id to which this record belongs to.

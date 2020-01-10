@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from flask import current_app, g
 import gridfs
+from mongoengine import *
 
 ROOT_PATH = None
 
