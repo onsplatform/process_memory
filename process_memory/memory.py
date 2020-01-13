@@ -5,13 +5,13 @@ import util
 from pymongo import DESCENDING
 from bson.json_util import dumps, loads, CANONICAL_JSON_OPTIONS
 from process_memory.dataset import *
+from process_memory.event import *
 from process_memory.header import Header
 
 bp = Blueprint('memory', __name__)
 
-MAX_BYTES: int = 16000000
+
 DATA_SIZE: int = None
-LARGE_COLLECTIONS = ('unidadegeradora', 'potenciauge', 'franquiauge', 'eventomudancaestadooperativo')
 INSTANCE_HEADER = None
 
 
@@ -28,17 +28,17 @@ def persist_memory(instance_id):
 
         # Extract the payload into memories. Create a header to link them all.
         event: dict = {'event': json_data.pop('event', None)}
-        map: dict = {'map': json_data.pop('map', None)}
+        mapper: dict = {'map': json_data.pop('map', None)}
         fork: dict = {'fork': json_data.pop('fork', None)}
         dataset: dict = json_data.pop('dataset', None)
         global INSTANCE_HEADER
         INSTANCE_HEADER = json_data
 
-        # save event
-        # save map
-        # save fork
-        # Instantiate a new DataSet Schema
-        _persist_dataset(dataset)
+        # save data
+        _persist_event(event)
+        _persist_mapper(mapper) if mapper else None
+        _persist_fork(fork) if fork else None
+        _persist_dataset(dataset) if dataset else None
 
         # Everything OK! Confirm all collections are saved.
         return make_response('Success', status.HTTP_201_CREATED)
@@ -46,15 +46,47 @@ def persist_memory(instance_id):
     return make_response("There is no data in the request.", status.HTTP_417_EXPECTATION_FAILED)
 
 
+def _persist_event(event: dict):
+
+    new_payload = Payload()
+
+    carga = event.get('payload').items()
+
+    new_event = Event()
+    new_event.header = _create_header_object(INSTANCE_HEADER)
+    new_event.name = event.get('name', None)
+    new_event.scope = event.get('scope', None)
+    new_event.instanceId = event.get('instanceId', None)
+    new_event.timestamp = event.get('timestamp', None)
+    new_event.owner = event.get('owner', None)
+    new_event.tag = event.get('tag', None)
+    new_event.branch = event.get('branch', None)
+
+
+
+    new_event.save()
+    return None
+
+
+def _persist_mapper(mapper: dict):
+    return None
+
+
+def _persist_fork(fork: dict):
+    return None
+
+
 def _persist_dataset(dataset: dict):
     """
     Persist a new dataset and its dependencies.
     :param dataset:
-    :param header:
     :return:
     """
+
+    large_dataset = ('unidadegeradora', 'potenciauge', 'franquiauge', 'eventomudancaestadooperativo')
+
     new_entity = Entities()
-    _bulk_insert(dataset, new_entity, 'entities')
+    _bulk_insert(dataset, new_entity, 'entities', large_dataset)
 
     # Create a new Dataset and populate it
     new_dataset = Dataset()
@@ -63,18 +95,19 @@ def _persist_dataset(dataset: dict):
     new_dataset.save()
 
 
-def _bulk_insert(from_collection: dict, to_collection: dict, payload: str):
+def _bulk_insert(from_collection: dict, to_collection: dict, payload: str, large_data: tuple):
     """
-    Insert multiple data into
-    :param from_collection:
-    :param to_collection:
-    :param payload:
+    Insert multiple data into the destination collection. Uses PyMongo´s insert_many.
+    :param from_collection: The collection from which data should be extracted.
+    :param to_collection: The destination collection, that means, the collection that should receive multiple data.
+    :param payload: List name
+    :param large_data: A tuple with information that should be bulk_inserted.
     :return:
     """
     db = get_database()
     for key, value in from_collection.get(payload).items():
         if value:
-            if key not in LARGE_COLLECTIONS:
+            if key not in large_data:
                 to_collection[key] = value
             else:
                 to_collection[key] = db[key].insert_many(
@@ -160,9 +193,11 @@ def _memory_insert(collection: str, data: dict):
     :param data: The data (dictionary) to save.
     :return: Document Object ID.
     """
+    max_bytes = 16000000
+
     try:
-        if sys.getsizeof(data) > MAX_BYTES:
-            raise ValueError("Document is too large. Use memory_file_insert if object is above " + str(MAX_BYTES))
+        if sys.getsizeof(data) > max_bytes:
+            raise ValueError("Document is too large. Use memory_file_insert if object is above " + str(max_bytes))
         db = get_database()
         result = db[collection].insert_one(data)
         return result.inserted_id

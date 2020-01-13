@@ -6,6 +6,7 @@ import datetime
 connect('platform_memory')
 
 
+
 class BaseDynamicDocument(DynamicDocument):
     meta = {'abstract': True}
     header = EmbeddedDocumentField(Header)
@@ -16,7 +17,7 @@ class Registros(BaseDynamicDocument):
     timestamp = DateTimeField(default=datetime.datetime.utcnow())
 
 
-class RegistrosOcorrencia(DynamicDocument):
+class RegistrosOcorrencia(DynamicEmbeddedDocument):
     registros = ListField(ReferenceField(Registros))
 
 
@@ -24,7 +25,7 @@ class Eventos(BaseDynamicDocument):
     timestamp = DateTimeField(default=datetime.datetime.utcnow())
 
 
-class Payload(DynamicDocument):
+class Payload(DynamicEmbeddedDocument):
     idconfiguracaocenario = UUIDField(binary=False)
     configuracaocenario = DictField()
     origensserializa = DictField()
@@ -44,4 +45,3 @@ class Event(DynamicDocument):
     branch = StringField(required=False)
     reproduction = DictField()
     reprocessing = DictField()
-    payload = EmbeddedDocumentField(Payload)
