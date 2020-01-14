@@ -31,7 +31,6 @@ class Payload(DynamicEmbeddedDocument):
     origensserializa = DictField()
     idsuges = DictField()
     registrosocorrencia = EmbeddedDocumentField(RegistrosOcorrencia)
-    eventos = ListField(ReferenceField(Eventos))
 
 
 class Event(DynamicDocument):
