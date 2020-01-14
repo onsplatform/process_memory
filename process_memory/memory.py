@@ -27,9 +27,9 @@ def persist_memory(instance_id):
         assert (type(json_data) is dict), "Method expects a dictionary and received: " + str(type(json_data))
 
         # Extract the payload into memories. Create a header to link them all.
-        event: dict = {'event': json_data.pop('event', None)}
-        mapper: dict = {'map': json_data.pop('map', None)}
-        fork: dict = {'fork': json_data.pop('fork', None)}
+        event: dict = json_data.pop('event', None)
+        mapper: dict = json_data.pop('map', None)
+        fork: dict = json_data.pop('fork', None)
         dataset: dict = json_data.pop('dataset', None)
         global INSTANCE_HEADER
         INSTANCE_HEADER = json_data
