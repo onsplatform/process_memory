@@ -3,14 +3,10 @@
 ########################################################################################################################
 
 from mongoengine import *
-from process_memory.models.header import Header
+
+from process_memory.models import BaseDynamicDocument
+from process_memory.models import Header
 import datetime
-
-
-class BaseDynamicDocument(DynamicDocument):
-    meta = {'abstract': True}
-    header = EmbeddedDocumentField(Header)
-    data = DictField()
 
 
 class UnidadeGeradora(BaseDynamicDocument):

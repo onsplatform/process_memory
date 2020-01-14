@@ -57,8 +57,7 @@ def _persist_event(event: dict):
     new_event = Event()
 
     # Create Event Payload
-    new_registro = _create_payload(event, new_payload, new_registro)
-    new_ocorrencia.registros = new_registro
+    new_ocorrencia.registros = _create_payload(event, new_payload, new_registro)
     new_payload.registrosocorrencia = new_ocorrencia
 
     new_event.header = _create_header_object(INSTANCE_HEADER)
@@ -104,7 +103,7 @@ def _persist_dataset(dataset: dict):
 def _create_payload(event, new_payload, new_registro):
     """
     This may be better written if the payload is simplified. _bulk_insert could be used.
-    :param event:
+    :param event: event collection
     :param new_payload:
     :param new_registro:
     :return:
