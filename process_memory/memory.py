@@ -4,9 +4,10 @@ import sys
 import util
 from pymongo import DESCENDING
 from bson.json_util import dumps, loads, CANONICAL_JSON_OPTIONS
-from process_memory.dataset import *
-from process_memory.event import *
-from process_memory.header import Header
+from process_memory.models.dataset import Entities, Dataset
+from process_memory.models.event import Event, Payload
+from process_memory.models.header import Header
+from process_memory.db import *
 
 bp = Blueprint('memory', __name__)
 
@@ -31,6 +32,7 @@ def persist_memory(instance_id):
         mapper: dict = json_data.pop('map', None)
         fork: dict = json_data.pop('fork', None)
         dataset: dict = json_data.pop('dataset', None)
+
         global INSTANCE_HEADER
         INSTANCE_HEADER = json_data
 
@@ -46,11 +48,41 @@ def persist_memory(instance_id):
     return make_response("There is no data in the request.", status.HTTP_417_EXPECTATION_FAILED)
 
 
+def gen_dict_extract(key, var):
+    if hasattr(var,'iteritems'):
+        for k, v in var.iteritems():
+            if k == key:
+                yield v
+            if isinstance(v, dict):
+                for result in gen_dict_extract(key, v):
+                    yield result
+            elif isinstance(v, list):
+                for d in v:
+                    for result in gen_dict_extract(key, d):
+                        yield result
+
+
 def _persist_event(event: dict):
 
+    # Payloads may be very large, with thousands of events. This must be treated with care.
     new_payload = Payload()
 
-    carga = event.get('payload').items()
+
+    registros = event.get('payload')['RegistrosOcorrencia']['Registros']
+
+    # Create Event Payload
+    db = get_database()
+    for key, value in event.get('payload').items():
+        if value:
+            if key not in ('Eventos', 'RegistrosOcorrencia'):
+                new_payload[key] = value
+            elif key is 'Eventos':
+                new_payload[key] = db[key].insert_many(
+                    [{'header': INSTANCE_HEADER, 'data': item} for item in value]).inserted_ids
+            elif key is 'RegistrosOcorrencia':
+                print(value)
+
+                # extract from dict, list
 
     new_event = Event()
     new_event.header = _create_header_object(INSTANCE_HEADER)
@@ -61,8 +93,6 @@ def _persist_event(event: dict):
     new_event.owner = event.get('owner', None)
     new_event.tag = event.get('tag', None)
     new_event.branch = event.get('branch', None)
-
-
 
     new_event.save()
     return None
@@ -82,7 +112,6 @@ def _persist_dataset(dataset: dict):
     :param dataset:
     :return:
     """
-
     large_dataset = ('unidadegeradora', 'potenciauge', 'franquiauge', 'eventomudancaestadooperativo')
 
     new_entity = Entities()
@@ -111,8 +140,7 @@ def _bulk_insert(from_collection: dict, to_collection: dict, payload: str, large
                 to_collection[key] = value
             else:
                 to_collection[key] = db[key].insert_many(
-                    [{'header': INSTANCE_HEADER, 'data': item} for item in value]
-                ).inserted_ids
+                    [{'header': INSTANCE_HEADER, 'data': item} for item in value]).inserted_ids
 
 
 def _create_header_object(header: dict):

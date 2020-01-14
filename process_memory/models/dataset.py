@@ -1,13 +1,10 @@
 ########################################################################################################################
-#   Schema Validation
+#   Dataset Schema Validation - Model
 ########################################################################################################################
 
-from process_memory.db import *
-from process_memory.header import Header
+from mongoengine import *
+from process_memory.models.header import Header
 import datetime
-
-
-connect('platform_memory')
 
 
 class BaseDynamicDocument(DynamicDocument):
