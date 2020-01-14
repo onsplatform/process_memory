@@ -7,6 +7,8 @@ from bson.json_util import dumps, loads, CANONICAL_JSON_OPTIONS
 from process_memory.models.dataset import *
 from process_memory.models.event import *
 from process_memory.models.header import Header
+from process_memory.models.mapper import Map
+from process_memory.models.fork import Fork
 from process_memory.db import *
 
 bp = Blueprint('memory', __name__)
@@ -75,11 +77,23 @@ def _persist_event(event: dict):
 
 
 def _persist_mapper(mapper: dict):
-    return None
+    new_map = Map()
+    new_map.header = _create_header_object(INSTANCE_HEADER)
+    for key, value in mapper.items():
+        if value:
+            new_map[key] = value
+
+    return new_map.save()
 
 
 def _persist_fork(fork: dict):
-    return None
+    new_fork = Fork()
+    new_fork.header = _create_header_object(INSTANCE_HEADER)
+    for key, value in fork.items():
+        if value:
+            new_fork[key] = value
+
+    return new_fork.save()
 
 
 def _persist_dataset(dataset: dict):
@@ -104,9 +118,9 @@ def _create_payload(event, new_payload, new_registro):
     """
     This may be better written if the payload is simplified. _bulk_insert could be used.
     :param event: event collection
-    :param new_payload:
+    :param new_payload: This is the event payload that must be broken apart.
     :param new_registro:
-    :return:
+    :return: A collection of registros ids
     """
     db = get_database()
     for key, value in event.get('payload').items():

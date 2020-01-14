@@ -8,7 +8,7 @@ from process_memory.models import Header
 
 class Map(Document):
     header = EmbeddedDocumentField(Header)
-    id = UUIDField(binary=False)
+    id = UUIDField(binary=False, primary_key=True, required=True)
     name = StringField()
     processId = UUIDField(binary=False)
     systemId = UUIDField(binary=False)
