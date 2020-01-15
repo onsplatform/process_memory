@@ -1,4 +1,3 @@
-from pymongo import MongoClient
 from flask import current_app, g
 import gridfs
 from mongoengine import *
@@ -35,14 +34,18 @@ def open_db_connection():
     """
     uri = f"mongodb://{current_app.config['HOST']}:{current_app.config['PORT']}"
     if 'db' not in g:
-        g.db = MongoClient("mongodb://localhost:27017/")
-        """
-        g.db = MongoClient(uri,
-                           username=current_app.config['USER'],
-                           password=current_app.config['SECRET'],
-                           ssl=True,
-                           ssl_ca_certs=f'{ROOT_PATH}/certs/rds-combined-ca-bundle.pem',
-                           replicaSet=current_app.config['REPLICASET'])
+
+        g.db = connect(db='platform_memory')
+        """        
+        g.db = connect(
+            host='localhost',
+            db='platform_memory',
+            username=current_app.config['USER'],
+            password=current_app.config['SECRET'],
+            ssl=True,
+            ssl_ca_certs=f'{ROOT_PATH}/certs/rds-combined-ca-bundle.pem',
+            replicaSet=current_app.config['REPLICASET']
+        )
         """
     return g.db
 
@@ -56,4 +59,5 @@ def close_db_connection(e=None):
     db = g.pop('db', e)
 
     if db is not None:
-        db.close()
+        disconnect_all()
+
