@@ -230,55 +230,6 @@ def find_head(instance_id):
     return make_response(result, status.HTTP_200_OK)
 
 
-########################################################################################################################
-# Reprocessing Methods - TODO: Move to another file
-########################################################################################################################
-@bp.route("/payload/<uuid:instance_id>", methods=['GET'])
-def get_payload(instance_id):
-    db = get_database()
-
-    header_query = {"header.instanceId": str(instance_id)}
-
-    # First roundtrip, get the the main data body.
-    data: dict = db['event'].find_one(header_query)
-
-    # Get the events data
-    events = [event.get('data', None) for event in db['Eventos'].find(header_query)]
-
-    # Get the registros data
-    registros = [registro.get('data', None) for registro in db['registros'].find(header_query)]
-
-    # Create the result data
-    for key, value in data.get('payload').items():
-        if key == 'Eventos':
-            data['payload'][key] = events
-        if key == 'registrosocorrencia':
-            data['payload'][key] = {'registros': registros}
-
-    result = dumps(data.get('payload'))
-
-    return make_response(result, status.HTTP_200_OK)
-
-
-@bp.route("/maps/<uuid:instance_id>", methods=['GET'])
-def get_maps(instance_id):
-    """
-    Get the map of the instanceId.
-    :param instance_id: UUID of the instanceId.
-    :return: Map dictionary.
-    """
-    get_database()
-
-    data = [item.to_json() for item in Map.objects(header__instanceId=instance_id)]
-    result = data[0]
-
-    return make_response(result, status.HTTP_200_OK)
-
-########################################################################################################################
-########################################################################################################################
-
-
-
 def _memory_insert(collection: str, data: dict):
     """
     !DEPRECATED!

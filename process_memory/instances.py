@@ -4,9 +4,84 @@ from bson.json_util import dumps
 import util
 from process_memory.db import get_database
 from pymongo import ASCENDING, DESCENDING
-
+from process_memory.models.mapper import Map
 
 bp = Blueprint('instances', __name__)
+
+
+@bp.route("/entities/<uuid:instance_id>", methods=['GET'])
+def get_entities(instance_id):
+    db = get_database()
+
+    header_query = {"header.instanceId": str(instance_id)}
+
+    # Get the the main data body.
+    data: dict = db['dataset'].find_one(header_query).get('entities')
+
+    unidadegeradora = _get_collection(db, 'unidadegeradora', header_query)
+    potenciauge = _get_collection(db, 'potenciauge', header_query)
+    franquiauge = _get_collection(db, 'franquiauge', header_query)
+    eventomudanca = _get_collection(db, 'eventomudancaestadooperativo', header_query)
+
+    data['unidadegeradora'] = unidadegeradora if unidadegeradora else None
+    data['potenciauge'] = potenciauge if potenciauge else None
+    data['franquiauge'] = franquiauge if franquiauge else None
+    data['eventomudancaestadooperativo'] = eventomudanca if eventomudanca else None
+
+    result = dumps(data)
+
+    return make_response(result, status.HTTP_200_OK)
+
+
+@bp.route("/payload/<uuid:instance_id>", methods=['GET'])
+def get_payload(instance_id):
+    db = get_database()
+
+    header_query = {"header.instanceId": str(instance_id)}
+
+    # First roundtrip, get the the main data body.
+    data: dict = db['event'].find_one(header_query)
+
+    # Get events, registros
+    events = _get_collection(db, 'Event', header_query)
+    registros = _get_collection(db, 'registros', header_query)
+
+    # Create the result
+    for key, value in data.get('payload').items():
+        if key == 'Eventos':
+            data['payload'][key] = events
+        if key == 'registrosocorrencia':
+            data['payload'][key] = {'registros': registros}
+
+    result = dumps(data.get('payload'))
+
+    return make_response(result, status.HTTP_200_OK)
+
+
+def _get_collection(db, collection: str, header_query):
+    """
+    Get the collection based on the header query.
+    :param db: database connection
+    :param collection: the document collection that should be searched
+    :param header_query:
+    :return:
+    """
+    return [item.get('data', None) for item in db[collection].find(header_query)]
+
+
+@bp.route("/maps/<uuid:instance_id>", methods=['GET'])
+def get_maps(instance_id):
+    """
+    Get the map of the instanceId.
+    :param instance_id: UUID of the instanceId.
+    :return: Map dictionary.
+    """
+    get_database()
+
+    data = [item.to_json() for item in Map.objects(header__instanceId=instance_id)]
+    result = data[0]
+
+    return make_response(result, status.HTTP_200_OK)
 
 
 @bp.route("/instances")
