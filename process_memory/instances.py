@@ -28,9 +28,7 @@ def get_entities(instance_id):
     data['franquiauge'] = franquiauge if franquiauge else None
     data['eventomudancaestadooperativo'] = eventomudanca if eventomudanca else None
 
-    result = dumps(data)
-
-    return make_response(result, status.HTTP_200_OK)
+    return jsonify(data)
 
 
 @bp.route("/payload/<uuid:instance_id>", methods=['GET'])
@@ -53,9 +51,7 @@ def get_payload(instance_id):
         if key == 'registrosocorrencia':
             data['payload'][key] = {'registros': registros}
 
-    result = dumps(data.get('payload'))
-
-    return make_response(result, status.HTTP_200_OK)
+    return jsonify(data.get('payload'), status.HTTP_200_OK)
 
 
 def _get_collection(db, collection: str, header_query):
@@ -78,10 +74,9 @@ def get_maps(instance_id):
     """
     get_database()
 
-    data = [item.to_json() for item in Map.objects(header__instanceId=instance_id)]
-    result = data[0]
+    data = [item.to_mongo() for item in Map.objects(header__instanceId=instance_id)]
 
-    return make_response(result, status.HTTP_200_OK)
+    return jsonify(data[0])
 
 
 @bp.route("/instances")
