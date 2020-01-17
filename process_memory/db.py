@@ -1,6 +1,7 @@
 from flask import current_app, g
 import gridfs
 from mongoengine import *
+from pymongo import MongoClient
 
 ROOT_PATH = None
 
@@ -35,7 +36,7 @@ def open_db_connection():
     uri = f"mongodb://{current_app.config['HOST']}:{current_app.config['PORT']}"
     if 'db' not in g:
 
-        g.db = connect(db='platform_memory')
+        g.db = connect(db='platform_memory', host='localhost:27017', alias='default')
         """        
         g.db = connect(
             host='localhost',

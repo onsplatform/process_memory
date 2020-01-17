@@ -11,6 +11,7 @@ from process_memory.models.mapper import Map
 from process_memory.models.fork import Fork
 from process_memory.db import *
 
+
 bp = Blueprint('memory', __name__)
 
 
@@ -77,6 +78,11 @@ def _persist_event(event: dict):
 
 
 def _persist_mapper(mapper: dict):
+    """
+    Persist Map Memory Object
+    :param mapper: Map data
+    :return: saved map object
+    """
     new_map = Map()
     new_map.header = _create_header_object(INSTANCE_HEADER)
     for key, value in mapper.items():
@@ -204,7 +210,24 @@ def create_memory(instance_id):
     return make_response("There is no data in the request.", status.HTTP_417_EXPECTATION_FAILED)
 
 
-@bp.route("/memory/<uuid:instance_id>")
+
+
+
+@bp.route("/maps/<uuid:instance_id>", methods=['GET'])
+def get_maps(instance_id):
+    """
+    Get the map of the instanceId.
+    :param instance_id: UUID of the instanceId.
+    :return: Map dictionary.
+    """
+    get_database()
+
+    data = [item.to_json() for item in Map.objects(header__instanceId=instance_id)]
+    result = data[0]
+
+    return make_response(result, status.HTTP_200_OK)
+
+
 @bp.route("/memory/<uuid:instance_id>/head")
 def find_head(instance_id):
     """
