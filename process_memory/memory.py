@@ -210,7 +210,54 @@ def create_memory(instance_id):
     return make_response("There is no data in the request.", status.HTTP_417_EXPECTATION_FAILED)
 
 
+@bp.route("/memory/<uuid:instance_id>/head")
+def find_head(instance_id):
+    """
+    Finds and returns the entire data collection for that particular instance id.
+    :param instance_id: UUID with the desired instance id.
+    :return:
+    """
+    header_query = {"header.instanceId": str(instance_id)}
+    db = get_database()
+    event_memory = db['event'].find(header_query).sort('timestamp', DESCENDING)
+    map_memory = db['map'].find(header_query).sort('timestamp', DESCENDING)
+    dataset_memory = db['dataset'].find(header_query).sort('timestamp', DESCENDING)
+    fork_memory = db['fork'].find(header_query).sort('timestamp', DESCENDING)
 
+    data = event_memory, map_memory, dataset_memory, fork_memory
+    result = dumps(data)
+
+    return make_response(result, status.HTTP_200_OK)
+
+
+########################################################################################################################
+# Reprocessing Methods - TODO: Move to another file
+########################################################################################################################
+@bp.route("/payload/<uuid:instance_id>", methods=['GET'])
+def get_payload(instance_id):
+    db = get_database()
+
+    header_query = {"header.instanceId": str(instance_id)}
+
+    # First roundtrip, get the the main data body.
+    data: dict = db['event'].find_one(header_query)
+
+    # Get the events data
+    events = [event.get('data', None) for event in db['Eventos'].find(header_query)]
+
+    # Get the registros data
+    registros = [registro.get('data', None) for registro in db['registros'].find(header_query)]
+
+    # Create the result data
+    for key, value in data.get('payload').items():
+        if key == 'Eventos':
+            data['payload'][key] = events
+        if key == 'registrosocorrencia':
+            data['payload'][key] = {'registros': registros}
+
+    result = dumps(data.get('payload'))
+
+    return make_response(result, status.HTTP_200_OK)
 
 
 @bp.route("/maps/<uuid:instance_id>", methods=['GET'])
@@ -227,25 +274,9 @@ def get_maps(instance_id):
 
     return make_response(result, status.HTTP_200_OK)
 
+########################################################################################################################
+########################################################################################################################
 
-@bp.route("/memory/<uuid:instance_id>/head")
-def find_head(instance_id):
-    """
-    Finds and returns the entire data collection for that particular instance id.
-    :param instance_id: UUID with the desired instance id.
-    :return:
-    """
-    head_query = {"header.instanceId": str(instance_id)}
-    db = get_database()
-    event_memory = db['events'].find(head_query).sort('timestamp', DESCENDING)
-    map_memory = db['maps'].find(head_query).sort('timestamp', DESCENDING)
-    dataset_memory = db['dataset'].find(head_query).sort('timestamp', DESCENDING)
-    fork_memory = db['fork'].find(head_query).sort('timestamp', DESCENDING)
-
-    data = event_memory, map_memory, dataset_memory, fork_memory
-    result = dumps(data)
-
-    return make_response(result, status.HTTP_200_OK)
 
 
 def _memory_insert(collection: str, data: dict):
