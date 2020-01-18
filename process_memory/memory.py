@@ -50,9 +50,12 @@ def persist_memory(instance_id):
 
     return make_response("There is no data in the request.", status.HTTP_417_EXPECTATION_FAILED)
 
+########################################################################################################################
+# Private Methods
+########################################################################################################################
+
 
 def _persist_event(event: dict):
-
     # Payloads may be very large, with thousands of events. This must be treated with care.
     new_payload = Payload()
     new_ocorrencia = RegistrosOcorrencia()
@@ -230,43 +233,6 @@ def find_head(instance_id):
     return make_response(result, status.HTTP_200_OK)
 
 
-def _memory_insert(collection: str, data: dict):
-    """
-    !DEPRECATED!
-    Inserts a new document object into the database
-    :param collection: The collection that the document belongs and should be saved to.
-    :param data: The data (dictionary) to save.
-    :return: Document Object ID.
-    """
-    max_bytes = 16000000
-
-    try:
-        if sys.getsizeof(data) > max_bytes:
-            raise ValueError("Document is too large. Use memory_file_insert if object is above " + str(max_bytes))
-        db = get_database()
-        result = db[collection].insert_one(data)
-        return result.inserted_id
-    except ValueError as ve:
-        print(ve)
-
-
-def _memory_file_insert(instance_uuid: str, header: dict, data: bytes, collection: str):
-    """
-    !DEPRECATED!
-    Inserts a new document as a compressed file into the database. Header will be saved as metadata.
-    :param data: The data (bytes) to be compressed and inserted.
-    :param instance_uuid: The instance_id to which this record belongs to.
-    :param header: Header is data to identify the file. It will be saved as metadata.
-    :return: Tuple with (File Object ID, File name).
-    """
-    assert (type(data) is bytes), "For file compression and saving, data should be bytes."
-    compressed_data = util.compress(data)
-    fs = get_grid_fs()
-    file_name = collection + "_" + str(instance_uuid) + ".snappy"
-    file_id = fs.put(compressed_data, filename=file_name, metadata=header)
-    return file_id
-
-
 def _memory_save(collection: str, header_id: object, data: dict):
     """
     Save a process memory.
@@ -278,3 +244,23 @@ def _memory_save(collection: str, header_id: object, data: dict):
         data = util.include_header(header_id, data)
 
     return _memory_insert(collection, data)
+
+
+def _memory_insert(collection: str, data: dict):
+    """
+    Inserts a new document object into the database
+    :param collection: The collection that the document belongs and should be saved to.
+    :param data: The data (dictionary) to save.
+    :return: Document Object ID.
+    """
+    max_bytes = 16000000
+    try:
+        if sys.getsizeof(data) > max_bytes:
+            raise ValueError("Document is too large. Use memory_file_insert if object is above " + str(max_bytes))
+        db = get_database()
+        result = db[collection].insert_one(data)
+        return result.inserted_id
+    except ValueError as ve:
+        print(ve)
+
+
