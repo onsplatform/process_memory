@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from process_memory import db
-from . import instances, collection, history, memory
+from . import instances, collection, memory
 
 
 def create_app(test_config=None):
@@ -43,6 +43,5 @@ def create_app(test_config=None):
     app.register_blueprint(memory.bp)
     app.register_blueprint(instances.bp)
     app.register_blueprint(collection.bp)
-    app.register_blueprint(history.bp)
 
     return app
