@@ -5,8 +5,6 @@ verify_ssl = true
 
 [dev-packages]
 pytest = "*"
-# for windows development only.
-# python-snappy = {path = "./wheel/python_snappy-0.5.4-cp37-cp37m-win_amd64.whl",platform_version = "== 'Windows'"}
 
 [packages]
 flask = "*"
@@ -14,8 +12,6 @@ pymongo = "*"
 flask-api = "*"
 dnspython = "*"
 gunicorn = "*"
-ctypes-snappy = "*"
-python-snappy = "*"
 mongoengine = "*"
 
 [requires]
