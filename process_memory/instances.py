@@ -9,6 +9,9 @@ from process_memory.models.mapper import Map
 bp = Blueprint('instances', __name__)
 
 
+
+
+
 @bp.route("/entities/<uuid:instance_id>", methods=['GET'])
 def get_entities(instance_id):
     db = get_database()
@@ -51,7 +54,7 @@ def get_payload(instance_id):
         if key == 'registrosocorrencia':
             data['payload'][key] = {'registros': registros}
 
-    return jsonify(data.get('payload'), status.HTTP_200_OK)
+    return jsonify(data.get('payload'))
 
 
 def _get_collection(db, collection: str, header_query):
