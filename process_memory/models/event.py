@@ -38,7 +38,7 @@ class Event(DynamicDocument):
     name = StringField(required=False)
     scope = StringField(required=False)
     instanceId = UUIDField(binary=False)
-    timestamp = StringField(required=False)
+    timestamp = DateTimeField(required=True)
     owner = StringField(required=False)
     tag = UUIDField(binary=False)
     branch = StringField(required=False)

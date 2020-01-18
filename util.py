@@ -1,5 +1,4 @@
 from datetime import datetime
-import snappy
 import json
 from bson import json_util
 
@@ -7,6 +6,9 @@ from bson import json_util
 def get_time():
 	return datetime.utcnow()
 
+
+def get_datetime_from(date_string: str):
+	return datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%S.%f')
 
 def create_document(body):
 	"""	Prepare document for persistance."""
@@ -27,24 +29,6 @@ def prepare_document(body, **kwargs):
 		"instance_id": "instance_id"
 	}
 	return {**header, **body}
-
-
-def compress(data: bytes):
-	"""
-	Compresses data with default encoding UTF-8. We currently use Google´s Snappy (it´s fast).
-	:param data: bytes that are going to be compressed.
-	:return: bytes compressed by algorithm.
-	"""
-	return snappy.compress(data, 'utf-8')
-
-
-def uncompress(data: bytes):
-	"""
-	Uncompresses data from repository. Using Google´s Snappy (it´s very fast).
-	:param data: bytes that have been compressed
-	:return: bytes decompressed by algorithm.
-	"""
-	return snappy.uncompress(data)
 
 
 def convert_to_bytes(dictionary_data: dict):

@@ -11,37 +11,23 @@ This application is built using the following high level architecture:
 
 Use a Document Database, MongoDB 3.6 compatible and proceed to create the database and collection.
 
-- Database Name: platform
-- Collection Name: process_memory
+- Database Name: platform_memory (it will be created automatically on the first insertion)
+- Main Collection Names: dataset, event, fork, map
 
 You need to configure the environment variables to activate the service. They have default values that should be only
 used for development.
 
-### Libraries
+### Libraries and Virtual Environment
 
 Make sure the development environment has been correctly configured. 
 If you get errors like *fatal error: Python.h: No such file or directory* you may be missing development packages.
 
+We use pipenv and it should be installed before running it.
+
 ```shell script
-sudo apt install -y libpython3.7-dev python3.7-dev
-sudo apt-get install -y libsnappy-dev
+pip install pipenv
+
 ```
-
-**Windows**
-
-You need to install the provided whl snappy file. Below, the file is for Python 3.7 64-bit.
-If you need other versions, download them from <https://www.lfd.uci.edu/~gohlke/pythonlibs/#python-snappy>. 
-You have to point to where you saved the file:
-```shell script
-pip install python_snappy-0.5.4-cp37-cp37m-win_amd64.whl
-```
-
-Then, install it on your virtual environment (VE). Make sure you are in the correct VE folder.
-```shell script
-pipenv shell
-pipenv install python_snappy-0.5.4-cp37-cp37m-win_amd64.whl
-```
-
 
 ### DOCDB        
 

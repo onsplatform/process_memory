@@ -1,7 +1,5 @@
 from flask import current_app, g
-import gridfs
 from mongoengine import *
-from pymongo import MongoClient
 
 ROOT_PATH = None
 
@@ -23,24 +21,20 @@ def get_database():
     return db[current_app.config['DATABASE_NAME']]
 
 
-def get_grid_fs():
-    db = get_database()
-    return gridfs.GridFS(db)
-
-
 def open_db_connection():
     """ 
     Connect to database. First create the URI and then connect to it.
     Production params should come from a config file. Default values are provided for dev.
-    """
     uri = f"mongodb://{current_app.config['HOST']}:{current_app.config['PORT']}"
+    """
     if 'db' not in g:
 
-        g.db = connect(db='platform_memory', host='localhost:27017', alias='default')
+        g.db = connect(db='platform_memory', host='localhost', alias='default')
+
         """        
         g.db = connect(
-            host='localhost',
-            db='platform_memory',
+            host=current_app.config['HOST'],
+            db=current_app.config['DATABASE_NAME'],
             username=current_app.config['USER'],
             password=current_app.config['SECRET'],
             ssl=True,

@@ -11,7 +11,6 @@ from process_memory.models.mapper import Map
 from process_memory.models.fork import Fork
 from process_memory.db import *
 
-
 bp = Blueprint('memory', __name__)
 
 
@@ -70,7 +69,7 @@ def _persist_event(event: dict):
     new_event.name = event.get('name', None)
     new_event.scope = event.get('scope', None)
     new_event.instanceId = event.get('instanceId', None)
-    new_event.timestamp = event.get('timestamp', None)
+    new_event.timestamp = util.get_datetime_from(event.get('timestamp'))
     new_event.owner = event.get('owner', None)
     new_event.tag = event.get('tag', None)
     new_event.branch = event.get('branch', None)
