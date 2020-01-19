@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, make_response
 from flask_api import status
-from bson.json_util import dumps
+from bson.json_util import dumps, loads, CANONICAL_JSON_OPTIONS
 import util
 from process_memory.db import get_database
 from pymongo import ASCENDING, DESCENDING
@@ -9,18 +9,43 @@ from process_memory.models.mapper import Map
 bp = Blueprint('instances', __name__)
 
 
+@bp.route("/entities/type", methods=['POST'])
+def get_with_entities_type():
+    """"
+    From a list of entity types, return the instanceId if they exist.
+    Expects a list of entities:
+    ["usina","configuracaocenario"]
 
+    The search format is: {"entities.{entity}": {"$exists": "true"}}
+    Concrete example: {"entities.usina": {"$exists": "true"}}
+    """
+    if request.data:
+        entity_type: list = loads(request.data, json_options=CANONICAL_JSON_OPTIONS)
+
+        query_items = {}
+
+        # Create the dictionary with keys being the entities and value if they exist.
+        for item in entity_type:
+            query_items[f"entities.{item}"] = {"$exists": "true"}
+
+        db = get_database()
+
+        data = [item.get('header')['instanceId'] for item in db['dataset'].find(query_items)]
+
+        return jsonify(data)
+
+    return make_response("No data provided", status.HTTP_417_EXPECTATION_FAILED)
 
 
 @bp.route("/entities/<uuid:instance_id>", methods=['GET'])
 def get_entities(instance_id):
-    db = get_database()
-
     header_query = {"header.instanceId": str(instance_id)}
 
+    db = get_database()
     # Get the the main data body.
     data: dict = db['dataset'].find_one(header_query).get('entities')
 
+    # Get the collections with the same header
     unidadegeradora = _get_collection(db, 'unidadegeradora', header_query)
     potenciauge = _get_collection(db, 'potenciauge', header_query)
     franquiauge = _get_collection(db, 'franquiauge', header_query)
@@ -36,10 +61,12 @@ def get_entities(instance_id):
 
 @bp.route("/payload/<uuid:instance_id>", methods=['GET'])
 def get_payload(instance_id):
-    db = get_database()
-
+    """"
+    Returns the payload of an instanceId.
+    """
     header_query = {"header.instanceId": str(instance_id)}
 
+    db = get_database()
     # First roundtrip, get the the main data body.
     data: dict = db['event'].find_one(header_query)
 
