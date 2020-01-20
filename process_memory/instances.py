@@ -14,15 +14,24 @@ def get_with_entities_type():
     """"
     From a list of entity types, return the instanceId if they exist.
     Expects a list of entities:
-    ["usina","configuracaocenario"]
-
+        {
+        "entities_type": [
+            "usina",
+            "configuracaocenario"
+        ],
+        "reprocess_after": "2016-04-20T00:00:00.0987"
+        }
     The search format is: {"entities.{entity}": {"$exists": "true"}}
     Concrete example: {"entities.usina": {"$exists": "true"}}
     """
     if request.data:
-        entity_type: list = loads(request.data, json_options=CANONICAL_JSON_OPTIONS)
-
+        json_data: list = loads(request.data, json_options=CANONICAL_JSON_OPTIONS)
         query_items = {}
+
+        entity_type = json_data.pop('entities_type', None)
+        reprocess_after = util.get_datetime_from(json_data.get('reprocess_after'))
+
+        query_items["header.timestamp"] = {"$gte": reprocess_after}
 
         # Create the dictionary with keys being the entities and value if they exist.
         for item in entity_type:
