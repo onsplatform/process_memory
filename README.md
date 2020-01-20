@@ -23,10 +23,11 @@ Make sure the development environment has been correctly configured.
 If you get errors like *fatal error: Python.h: No such file or directory* you may be missing development packages.
 
 We use pipenv and it should be installed before running it.
-
+Swtich to the folder where you want the app installed and proceeed as follows:
 ```shell script
 pip install pipenv
-
+git clone --branch repro https://github.com/onsplatform/process_memory.git
+pipenv install
 ```
 
 ### DOCDB        
