@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from process_memory import db
-from . import instances, collection, memory
+from . import memory_queries, collection, memory
 
 
 def create_app(test_config=None):
@@ -11,6 +11,7 @@ def create_app(test_config=None):
     :return:
     """
     app = Flask(__name__, instance_relative_config=True)
+    app.config["JSON_SORT_KEYS"] = False
     app.config.from_mapping(
         USER=os.getenv('DOCDB_USER', ''),
         SECRET=os.getenv('DOCDB_SECRET', ''),
@@ -41,7 +42,7 @@ def create_app(test_config=None):
         return str(f"Hello! This is the current configured database: {current_db.test}")
 
     app.register_blueprint(memory.bp)
-    app.register_blueprint(instances.bp)
+    app.register_blueprint(memory_queries.bp)
     app.register_blueprint(collection.bp)
 
     return app

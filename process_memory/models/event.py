@@ -30,7 +30,7 @@ class Payload(DynamicEmbeddedDocument):
     configuracaocenario = DictField()
     origensserializa = DictField()
     idsuges = DictField()
-    registrosocorrencia = EmbeddedDocumentField(RegistrosOcorrencia)
+    registrosocorrencia = DictField()
 
 
 class Event(DynamicDocument):
@@ -44,4 +44,4 @@ class Event(DynamicDocument):
     branch = StringField(required=False)
     reproduction = DictField()
     reprocessing = DictField()
-    payload = EmbeddedDocumentField(Payload)
+    payload = DictField()
