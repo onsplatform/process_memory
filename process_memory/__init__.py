@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from process_memory import db
-from . import memory_queries, collection, memory
+from . import memory_queries, collection, memory_create
 
 
 def create_app(test_config=None):
@@ -41,7 +41,7 @@ def create_app(test_config=None):
         current_db = db.open_db_connection()
         return str(f"Hello! This is the current configured database: {current_db.test}")
 
-    app.register_blueprint(memory.bp)
+    app.register_blueprint(memory_create.bp)
     app.register_blueprint(memory_queries.bp)
     app.register_blueprint(collection.bp)
 

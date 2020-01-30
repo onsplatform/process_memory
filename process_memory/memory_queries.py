@@ -1,9 +1,6 @@
 from flask import Blueprint, request, jsonify
-
 from pymongo import ASCENDING
-
 from bson.json_util import loads
-
 from process_memory.db import get_database
 
 bp = Blueprint('instances', __name__)
