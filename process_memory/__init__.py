@@ -1,6 +1,8 @@
 import os
 from flask import Flask
 from process_memory import db
+from flask.json import JSONEncoder
+from datetime import date
 from . import memory_queries, collection, memory_create
 
 
@@ -10,6 +12,19 @@ def create_app(test_config=None):
     :param test_config:
     :return:
     """
+
+    class CustomJSONEncoder(JSONEncoder):
+        def default(self, obj):
+            try:
+                if isinstance(obj, date):
+                    return obj.isoformat()
+                iterable = iter(obj)
+            except TypeError:
+                pass
+            else:
+                return list(iterable)
+            return JSONEncoder.default(self, obj)
+
     app = Flask(__name__, instance_relative_config=True)
     app.config["JSON_SORT_KEYS"] = False
     app.config.from_mapping(
@@ -21,6 +36,7 @@ def create_app(test_config=None):
         REPLICASET=os.getenv('DOCDB_REPLICASET', 'rs0'),
         MAX_DOC_SIZE=os.getenv('DOCUMENT_SIZE', 15000000)
     )
+    app.json_encoder = CustomJSONEncoder
 
     if not test_config:
         # Load the instance config, when not testing

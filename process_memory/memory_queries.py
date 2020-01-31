@@ -1,3 +1,4 @@
+import util
 from flask import Blueprint, request, jsonify
 from pymongo import ASCENDING
 from bson.json_util import loads
@@ -8,23 +9,28 @@ bp = Blueprint('instances', __name__)
 
 @bp.route("/<uuid:instance_id>/head")
 def find_head(instance_id):
-    result = dict()
-    event = get_event(instance_id)
-    maps = get_maps(instance_id)
-    entities = get_entities(instance_id)
-    fork = get_fork(instance_id)
+    entities, event, fork, maps = _get_memory_body(instance_id)
+    if event:
+        result = dict()
+        result['event'] = event if event else None
+        result['map'] = {'content': maps if maps else None}
+        result['dataset'] = {'entities': entities if entities else None}
+        result['fork'] = fork if fork else None
+        result['processId'] = result['event']['header']['processId']
+        result['systemId'] = result['event']['header']['systemId']
+        result['instanceId'] = result['event']['header']['instanceId']
+        result['eventOut'] = result['event']['header']['eventOut']
+        result['commit'] = result['event']['header']['commit']
 
-    result['event'] = loads(event.data) if event and event.data else None
-    result['map'] = {'content': loads(maps.data) if maps and maps.data else None}
-    result['dataset'] = {'entities': loads(entities.data) if entities and entities.data else None}
-    result['fork'] = loads(fork.data) if fork and fork.data else None
-    result['processId'] = result['event']['header']['processId']
-    result['systemId'] = result['event']['header']['systemId']
-    result['instanceId'] = result['event']['header']['instanceId']
-    result['eventOut'] = result['event']['header']['eventOut']
-    result['commit'] = result['event']['header']['commit']
+        return jsonify(result)
 
-    return jsonify(result)
+
+def _get_memory_body(instance_id):
+    event = get_memory_part(instance_id, 'event')
+    maps = get_grouped(instance_id, 'maps')
+    entities = get_grouped(instance_id, 'entities')
+    fork = get_memory_part(instance_id, 'fork')
+    return entities, event, fork, maps
 
 
 @bp.route('/entities/with/ids', methods=['POST'])
@@ -32,12 +38,10 @@ def get_entities_with_ids():
     if request.data:
         data = set()
         db = get_database()
-
         for item in loads(request.data).pop('entities', None):
-            query_items = {f"header.timestamp": {"$gte": item['timestamp']},
+            query_items = {f"header.timestamp": {"$gte": util.get_datetime_from(item['timestamp'])},
                            f"data.id": {"$eq": item['id']}}
             [data.add(item['header']['instanceId']) for item in db['entities'].find(query_items)]
-        print(list(data))
         if data:
             return jsonify(
                 [item['instanceId'] for item in
@@ -51,7 +55,7 @@ def get_entities_with_type():
         db = get_database()
 
         for item in loads(request.data).pop('entities', None):
-            query_items = {f"header.timestamp": {"$gte": item['timestamp']},
+            query_items = {f"header.timestamp": {"$gte": util.get_datetime_from(item['timestamp'])},
                            f"type": {"$eq": item['type']}}
             [data.add(item['header']['instanceId']) for item in db['entities'].find(query_items)]
 
@@ -64,28 +68,28 @@ def get_entities_with_type():
 @bp.route("/payload/<uuid:instance_id>", methods=['GET'])
 def get_payload(instance_id):
     event = get_memory_part(instance_id, 'event')
-    if event and event.data:
-        return loads(event.data)['payload']
+    if event:
+        return jsonify(event['payload'])
 
 
 @bp.route("/fork/<uuid:instance_id>", methods=['GET'])
 def get_fork(instance_id):
-    return get_memory_part(instance_id, 'fork')
+    return jsonify(get_memory_part(instance_id, 'fork'))
 
 
 @bp.route("/event/<uuid:instance_id>", methods=['GET'])
 def get_event(instance_id):
-    return get_memory_part(instance_id, 'event')
+    return jsonify(get_memory_part(instance_id, 'event'))
 
 
 @bp.route("/entities/<uuid:instance_id>", methods=['GET'])
 def get_entities(instance_id):
-    return get_grouped(instance_id, 'entities')
+    return jsonify(get_grouped(instance_id, 'entities'))
 
 
 @bp.route("/maps/<uuid:instance_id>", methods=['GET'])
 def get_maps(instance_id):
-    return get_grouped(instance_id, 'maps')
+    return jsonify(get_grouped(instance_id, 'maps'))
 
 
 def get_memory_part(instance_id, collection):
@@ -95,7 +99,7 @@ def get_memory_part(instance_id, collection):
     data = db[collection].find_one(header_query)
     if data:
         data.pop('_id')
-        return jsonify(data)
+        return data
 
 
 def get_grouped(instance_id, collection):
@@ -109,4 +113,4 @@ def get_grouped(instance_id, collection):
             ret[item['type']] = []
         ret[item['type']].append(item['data'])
 
-    return jsonify(ret)
+    return ret
