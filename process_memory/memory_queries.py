@@ -89,7 +89,15 @@ def get_entities(instance_id):
 
 @bp.route("/maps/<uuid:instance_id>", methods=['GET'])
 def get_maps(instance_id):
-    return jsonify(get_grouped(instance_id, 'maps'))
+    header_query = {"header.instanceId": str(instance_id)}
+
+    db = get_database()
+    items = [item for item in db['maps'].find(header_query)]
+    ret = dict()
+    for item in items:
+        ret[item['type']] = item['data']
+
+    return jsonify(ret)
 
 
 def get_memory_part(instance_id, collection):
