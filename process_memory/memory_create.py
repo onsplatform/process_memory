@@ -47,8 +47,8 @@ def _create_or_update_memory(entities, event, fork, maps, header):
 def _get_memory_body(json_data):
     event = json_data.pop('event', None)
     fork = json_data.pop('fork', None)
-    maps = json_data.pop('map', None).pop('content', None)
-    entities = json_data.pop('dataset', None).pop('entities', None)
+    maps = json_data.pop('map', {}).pop('content', None)
+    entities = json_data.pop('dataset', {}).pop('entities', None)
     json_data['timestamp'] = event.get('timestamp', datetime.utcnow())
     header = _create_header_object(json_data)
     return entities, event, fork, maps, header
