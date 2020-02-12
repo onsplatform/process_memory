@@ -30,8 +30,8 @@ def create_app(test_config=None):
     app.config.from_mapping(
         USER=os.getenv('DOCDB_USER', ''),
         SECRET=os.getenv('DOCDB_SECRET', ''),
-        HOST=os.getenv('DOCDB_HOST', 'localhost'),
-        DATABASE_NAME=os.getenv('DOCDB_DATABASE_NAME', 'platform_memory'),
+        HOST=os.getenv('HOST', 'localhost'),
+        DATABASE_NAME=os.getenv('DATABASE_NAME', 'platform_memory'),
         PORT=os.getenv('DOCDB_PORT', '27017'),
         REPLICASET=os.getenv('DOCDB_REPLICASET', 'rs0'),
         MAX_DOC_SIZE=os.getenv('DOCUMENT_SIZE', 15000000)
