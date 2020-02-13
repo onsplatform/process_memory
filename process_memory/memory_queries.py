@@ -102,7 +102,6 @@ def get_maps(instance_id):
 
 def get_memory_part(instance_id, collection):
     header_query = {"header.instanceId": str(instance_id)}
-
     db = get_database()
     data = db[collection].find_one(header_query)
     if data:

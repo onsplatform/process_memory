@@ -4,7 +4,7 @@ upstream memory_server {
 }
 
 server {
-    listen   80;
+    listen   9091;
     server_name localhost;
     proxy_connect_timeout 600;
     proxy_send_timeout 600;

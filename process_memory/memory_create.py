@@ -9,8 +9,8 @@ from process_memory.memory_queries import find_head
 bp = Blueprint('memory', __name__)
 
 
-@bp.route("/memory/<uuid:instance_id>", methods=['POST'])
-@bp.route("/memory/<uuid:instance_id>/commit", methods=['POST'])
+@bp.route("/<uuid:instance_id>", methods=['POST'])
+@bp.route("/<uuid:instance_id>/commit", methods=['POST'])
 def create_memory(instance_id):
     if request.data:
         json_data = loads(request.data, json_options=CANONICAL_JSON_OPTIONS)
@@ -19,7 +19,7 @@ def create_memory(instance_id):
         return make_response('Success', status.HTTP_201_CREATED)
 
 
-@bp.route("/memory/clone/<uuid:from_instance_id>/<uuid:to_instance_id>", methods=['POST'])
+@bp.route("/clone/<uuid:from_instance_id>/<uuid:to_instance_id>", methods=['POST'])
 def clone_memory(from_instance_id, to_instance_id):
     response = find_head(from_instance_id)
     if response:
@@ -47,10 +47,10 @@ def _create_or_update_memory(entities, event, fork, maps, header):
 def _get_memory_body(json_data):
     event = json_data.pop('event', None)
     fork = json_data.pop('fork', None)
-    maps = json_data.pop('map', None).pop('content', None)
-    entities = json_data.pop('dataset', None).pop('entities', None)
+    maps = json_data.pop('map', {}).pop('content', None)
+    entities = json_data.pop('dataset', {}).pop('entities', None)
     json_data['timestamp'] = event.get('timestamp', datetime.utcnow())
-    header = _create_header_object(json_data)
+    header = _create_header_object(event)
     return entities, event, fork, maps, header
 
 
@@ -59,7 +59,7 @@ def _persist_event(db, event, header):
     new_event['header'] = header
     new_event['name'] = event.get('name', None)
     new_event['scope'] = event.get('scope', None)
-    new_event['instanceId'] = str(header['instanceId'])
+    new_event['instanceId'] = event.get('instanceId', None)
     new_event['reproduction'] = header['reproduction']
     new_event['timestamp'] = util.get_datetime_from(event.get('timestamp'))
     new_event['owner'] = event.get('owner', None)
