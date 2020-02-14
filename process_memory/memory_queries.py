@@ -117,8 +117,6 @@ def get_grouped(instance_id, collection):
     items = [item for item in db[collection].find(header_query)]
     ret = dict()
     for item in items:
-        if not item['type'] in ret.keys():
-            ret[item['type']] = []
-        ret[item['type']].append(item['data'])
+        ret[item['type']] = item['data']
 
     return ret
