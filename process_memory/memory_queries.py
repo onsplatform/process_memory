@@ -13,8 +13,8 @@ def find_head(instance_id):
     if event:
         result = dict()
         result['event'] = event if event else None
-        result['map'] = {'content': maps if maps else None}
-        result['dataset'] = {'entities': entities if entities else None}
+        result['map'] = {'content': maps if maps else []}
+        result['dataset'] = {'entities': entities if entities else []}
         result['fork'] = fork if fork else None
         result['processId'] = result['event']['header']['processId']
         result['systemId'] = result['event']['header']['systemId']

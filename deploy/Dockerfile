@@ -1,39 +1,28 @@
-FROM python:3.7.5-stretch
+FROM python:3.7-stretch
 
-#
-# SETUP CONTAINER
-#
-RUN apt-get update -y && apt-get upgrade -y && apt-get install nginx git libpython3.7-dev python3.7-dev libsnappy-dev -y
+RUN apt-get -y update && apt-get -y upgrade && apt-get install nginx git -y
 
-EXPOSE 80
+RUN git clone --branch reprocess https://github.com/onsplatform/process_memory.git /var/www/memory
 
-ENV GUNICORN_TIMEOUT 120
-
-#
-# DEPLOY APP
-#
-RUN git clone --branch reprocess https://github.com/onsplatform/process_memory /var/www/memory
-
-WORKDIR /var/www/memory/
+WORKDIR /var/www/memory
 
 RUN pip install pipenv gunicorn
+RUN pipenv install  --system --deploy
 
-RUN pipenv install --system --deploy
 
-#
-# DEPLOY SERVICE
-#
 RUN cp /var/www/memory/deploy/memory.nginx /etc/nginx/sites-available/memory
 
 RUN mkdir /var/log/memory \
  && rm -rf /etc/nginx/sites-enabled/default \
  && ln -s /etc/nginx/sites-available/memory /etc/nginx/sites-enabled/memory
 
+ENV GUNICORN_TIMEOUT 3000
+ENV PORT 9091
+ENV HOST mongo
+ENV DATABASE_NAME platform_memory
 
+EXPOSE 9091
 
-#
-# SETUP ENTRYPOINT
-#
 RUN cp /var/www/memory/deploy/docker_entrypoint.sh /docker_entrypoint.sh
 
 RUN chmod +x /docker_entrypoint.sh
