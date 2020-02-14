@@ -20,7 +20,8 @@ def find_head(instance_id):
         result['systemId'] = result['event']['header']['systemId']
         result['instanceId'] = result['event']['header']['instanceId']
         result['eventOut'] = result['event']['header']['eventOut']
-        result['commit'] = result['event']['header']['commit']
+        commit = result['event']['header']['commit']
+        result['commit'] = commit if commit else False
 
         return jsonify(result)
 

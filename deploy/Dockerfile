@@ -12,7 +12,7 @@ ENV GUNICORN_TIMEOUT 120
 #
 # DEPLOY APP
 #
-RUN git clone https://github.com/onsplatform/process_memory /var/www/memory
+RUN git clone --branch reprocess https://github.com/onsplatform/process_memory /var/www/memory
 
 WORKDIR /var/www/memory/
 
