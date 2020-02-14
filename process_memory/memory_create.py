@@ -1,7 +1,7 @@
 import util
 from datetime import datetime
 from flask_api import status
-from flask import Blueprint, request, make_response, jsonify
+from flask import Blueprint, request, make_response
 from bson.json_util import loads, CANONICAL_JSON_OPTIONS
 from process_memory.db import get_database
 from process_memory.memory_queries import find_head
@@ -16,7 +16,7 @@ def create_memory(instance_id):
         json_data = loads(request.data, json_options=CANONICAL_JSON_OPTIONS)
         entities, event, fork, maps, header = _get_memory_body(json_data)
         _create_or_update_memory(entities, event, fork, maps, header)
-        return jsonify({'success': True})
+        return make_response('', status.HTTP_201_CREATED)
 
 
 @bp.route("/clone/<uuid:from_instance_id>/<uuid:to_instance_id>", methods=['POST'])
@@ -31,7 +31,7 @@ def clone_memory(from_instance_id, to_instance_id):
         json_data['instanceId'] = str(to_instance_id)
         entities, event, fork, maps, header = _get_memory_body(json_data)
         _create_or_update_memory(entities, event, fork, maps, header)
-        return jsonify({'success': True})
+        return make_response('', status.HTTP_201_CREATED)
 
 
 def _create_or_update_memory(entities, event, fork, maps, header):
