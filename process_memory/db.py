@@ -29,7 +29,7 @@ def open_db_connection():
     """
     if 'db' not in g:
 
-        g.db = connect(db='platform_memory', host='localhost', alias='default')
+        g.db = connect(db=current_app.config['DATABASE_NAME'], host=current_app.config['HOST'], alias='default')
 
         """        
         g.db = connect(
