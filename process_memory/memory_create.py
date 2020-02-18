@@ -11,6 +11,7 @@ bp = Blueprint('memory', __name__)
 
 @bp.route("/<uuid:instance_id>", methods=['POST'])
 @bp.route("/<uuid:instance_id>/commit", methods=['POST'])
+@bp.route("/<uuid:instance_id>/create", methods=['POST'])
 def create_memory(instance_id):
     if request.data:
         json_data = loads(request.data, json_options=CANONICAL_JSON_OPTIONS)
