@@ -16,7 +16,6 @@ def create_memory(instance_id):
     if request.data:
         print('creating process memory: ' + str(instance_id))
         json_data = loads(request.data, json_options=CANONICAL_JSON_OPTIONS)
-        print(json_data)
         entities, event, fork, maps, header = _get_memory_body(json_data)
         _create_or_update_memory(entities, event, fork, maps, header)
         return make_response('', status.HTTP_201_CREATED)
@@ -54,6 +53,10 @@ def _get_memory_body(json_data):
     entities = json_data.pop('dataset', {}).pop('entities', None)
     json_data['timestamp'] = event.get('timestamp', datetime.utcnow())
     header = _create_header_object(event)
+    print('/has event:' + event == None)
+    print('/has fork:' + fork == None)
+    print('/has maps:' + maps == None)
+    print('/has entities:' + entities == None)
     return entities, event, fork, maps, header
 
 
