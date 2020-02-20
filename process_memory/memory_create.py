@@ -47,20 +47,14 @@ def _create_or_update_memory(entities, event, fork, maps, header):
 
 
 def _get_memory_body(json_data):
+    import pdb;pdb.set_trace()
+    json_data = json_data.pop('json', json_data)
     event = json_data.pop('event', None)
     fork = json_data.pop('fork', None)
     maps = json_data.pop('map', {}).pop('content', None)
     entities = json_data.pop('dataset', {}).pop('entities', None)
     json_data['timestamp'] = event.get('timestamp', datetime.utcnow())
     header = _create_header_object(event)
-    if event:
-        print('/has event')
-    if fork:
-        print('/has fork')
-    if maps:
-        print('/has maps')
-    if entities:
-        print('/has entities')
     return entities, event, fork, maps, header
 
 
