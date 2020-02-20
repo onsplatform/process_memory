@@ -53,10 +53,14 @@ def _get_memory_body(json_data):
     entities = json_data.pop('dataset', {}).pop('entities', None)
     json_data['timestamp'] = event.get('timestamp', datetime.utcnow())
     header = _create_header_object(event)
-    print('/has event:' + event == None)
-    print('/has fork:' + fork == None)
-    print('/has maps:' + maps == None)
-    print('/has entities:' + entities == None)
+    if event:
+        print('/has event')
+    if fork:
+        print('/has fork')
+    if maps:
+        print('/has maps')
+    if entities:
+        print('/has entities')
     return entities, event, fork, maps, header
 
 
