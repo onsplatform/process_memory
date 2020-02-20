@@ -14,7 +14,9 @@ bp = Blueprint('memory', __name__)
 @bp.route("/<uuid:instance_id>/create", methods=['POST'])
 def create_memory(instance_id):
     if request.data:
+        print('creating process memory: ' + instance_id)
         json_data = loads(request.data, json_options=CANONICAL_JSON_OPTIONS)
+        print(json_data)
         entities, event, fork, maps, header = _get_memory_body(json_data)
         _create_or_update_memory(entities, event, fork, maps, header)
         return make_response('', status.HTTP_201_CREATED)
