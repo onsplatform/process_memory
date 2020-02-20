@@ -47,7 +47,6 @@ def _create_or_update_memory(entities, event, fork, maps, header):
 
 
 def _get_memory_body(json_data):
-    import pdb;pdb.set_trace()
     json_data = json_data.pop('json', json_data)
     event = json_data.pop('event', None)
     fork = json_data.pop('fork', None)
