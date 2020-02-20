@@ -1,4 +1,5 @@
 import os
+import logging
 from flask import Flask
 from process_memory import db
 from flask.json import JSONEncoder
@@ -37,6 +38,9 @@ def create_app(test_config=None):
         MAX_DOC_SIZE=os.getenv('DOCUMENT_SIZE', 15000000)
     )
     app.json_encoder = CustomJSONEncoder
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
 
     if not test_config:
         # Load the instance config, when not testing

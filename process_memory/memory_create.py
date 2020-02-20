@@ -1,4 +1,5 @@
 import util
+from flask import current_app as app
 from datetime import datetime
 from flask_api import status
 from flask import Blueprint, request, make_response
@@ -14,7 +15,7 @@ bp = Blueprint('memory', __name__)
 @bp.route("/<uuid:instance_id>/create", methods=['POST'])
 def create_memory(instance_id):
     if request.data:
-        print('creating process memory: ' + str(instance_id))
+        app.logger.debug('creating process memory: ' + str(instance_id))
         json_data = loads(request.data, json_options=CANONICAL_JSON_OPTIONS)
         entities, event, fork, maps, header = _get_memory_body(json_data)
         _create_or_update_memory(entities, event, fork, maps, header)
@@ -53,6 +54,14 @@ def _get_memory_body(json_data):
     maps = json_data.pop('map', {}).pop('content', None)
     entities = json_data.pop('dataset', {}).pop('entities', None)
     json_data['timestamp'] = event.get('timestamp', datetime.utcnow())
+    if event:
+        app.logger.debug('has event')
+    if fork:
+        app.logger.debug('has fork')
+    if maps:
+        app.logger.debug('has maps')
+    if entities:
+        app.logger.debug('has entities')
     header = _create_header_object(event)
     return entities, event, fork, maps, header
 
