@@ -13,7 +13,7 @@ def find_head(instance_id):
     if event:
         result = dict()
         result['event'] = event if event else None
-        result['map'] = {'content': maps if maps else {}}
+        result['map'] = {'content': maps if maps else {}, 'name': event['header']['app_name']}
         result['dataset'] = {'entities': entities if entities else {}}
         result['fork'] = fork if fork else None
         result['processId'] = result['event']['header']['processId']
@@ -28,7 +28,7 @@ def find_head(instance_id):
 
 def _get_memory_body(instance_id):
     event = get_memory_part(instance_id, 'event')
-    maps = get_grouped(instance_id, 'maps')
+    maps = _get_maps(instance_id)
     entities = get_grouped(instance_id, 'entities')
     fork = get_memory_part(instance_id, 'fork')
     return entities, event, fork, maps
@@ -90,15 +90,7 @@ def get_entities(instance_id):
 
 @bp.route("/maps/<uuid:instance_id>", methods=['GET'])
 def get_maps(instance_id):
-    header_query = {"header.instanceId": str(instance_id)}
-
-    db = get_database()
-    items = [item for item in db['maps'].find(header_query)]
-    ret = dict()
-    for item in items:
-        ret[item['type']] = item['data']
-
-    return jsonify(ret)
+    return jsonify(_get_maps(instance_id))
 
 
 def get_memory_part(instance_id, collection):
@@ -109,6 +101,8 @@ def get_memory_part(instance_id, collection):
         data.pop('_id')
         return data
 
+def _get_maps(instance_id):
+    return get_grouped(instance_id, 'maps')
 
 def get_grouped(instance_id, collection):
     header_query = {"header.instanceId": str(instance_id)}

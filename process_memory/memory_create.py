@@ -52,10 +52,12 @@ def _get_memory_body(json_data):
     json_data = json_data.pop('json', json_data)
     event = json_data.pop('event', None)
     fork = json_data.pop('fork', None)
-    maps = json_data.pop('map', {}).pop('content', None)
+    map = json_data.pop('map', {})
+    app_name = map.pop('name', None)
+    maps = map.pop('content', None)
     entities = json_data.pop('dataset', {}).pop('entities', None)
     json_data['timestamp'] = event.get('timestamp', datetime.utcnow())
-    header = _create_header_object(event)
+    header = _create_header_object(event, app_name)
     return entities, event, fork, maps, header
 
 
@@ -111,7 +113,7 @@ def _persist_entities(db, entities, header):
     db['entities'].insert_many(docs)
 
 
-def _create_header_object(json_data):
+def _create_header_object(json_data, app_name):
     new_header = dict()
     new_header['instanceId'] = json_data.get('instanceId')
     new_header['processId'] = json_data.get('processId')
@@ -119,5 +121,6 @@ def _create_header_object(json_data):
     new_header['eventOut'] = json_data.get('eventOut', None)
     new_header['commit'] = json_data.get('commit', None)
     new_header['reproduction'] = json_data.get('reproduction', None)
+    new_header['app_name'] = app_name
     new_header['timestamp'] = util.get_datetime_from(json_data.get('timestamp', None))
     return new_header
