@@ -29,7 +29,7 @@ def find_head(instance_id):
 def _get_memory_body(instance_id):
     event = get_memory_part(instance_id, 'event')
     maps = _get_maps(instance_id)
-    entities = get_grouped(instance_id, 'entities')
+    entities = _get_entities(instance_id)
     fork = get_memory_part(instance_id, 'fork')
     return entities, event, fork, maps
 
@@ -85,7 +85,7 @@ def get_event(instance_id):
 
 @bp.route("/entities/<uuid:instance_id>", methods=['GET'])
 def get_entities(instance_id):
-    return jsonify(get_grouped(instance_id, 'entities'))
+    return jsonify(_get_entities(instance_id))
 
 
 @bp.route("/maps/<uuid:instance_id>", methods=['GET'])
@@ -102,15 +102,25 @@ def get_memory_part(instance_id, collection):
         return data
 
 def _get_maps(instance_id):
-    return get_grouped(instance_id, 'maps')
-
-def get_grouped(instance_id, collection):
     header_query = {"header.instanceId": str(instance_id)}
 
     db = get_database()
-    items = [item for item in db[collection].find(header_query)]
+    items = [item for item in db['maps'].find(header_query)]
     ret = dict()
     for item in items:
         ret[item['type']] = item['data']
+
+    return ret
+
+def _get_entities(instance_id):
+    header_query = {"header.instanceId": str(instance_id)}
+
+    db = get_database()
+    items = [item for item in db['entities'].find(header_query)]
+    ret = dict()
+    for item in items:
+        if not item['type'] in ret.keys():
+            ret[item['type']] = []
+        ret[item['type']].append(item['data'])
 
     return ret
