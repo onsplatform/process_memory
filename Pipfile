@@ -10,7 +10,7 @@ pytest = "*"
 flask = "*"
 pymongo = "*"
 flask-api = "*"
-dnspython = "*"
+dnspython = "*"RUN pipenv install
 gunicorn = "*"
 mongoengine = "*"
 

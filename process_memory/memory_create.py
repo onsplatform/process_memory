@@ -101,7 +101,8 @@ def _persist_maps(db, maps, header):
     docs = list()
     for key in maps.keys():
         docs.append({'header': header, 'data': maps[key], 'type': key})
-    db['maps'].insert_many(docs)
+    if docs:
+        db['maps'].insert_many(docs)
 
 
 def _persist_entities(db, entities, header):
@@ -110,7 +111,8 @@ def _persist_entities(db, entities, header):
         if entities[key]:
             for value in entities[key]:
                 docs.append({'header': header, 'data': value, 'type': key})
-    db['entities'].insert_many(docs)
+    if docs:
+        db['entities'].insert_many(docs)
 
 
 def _create_header_object(json_data, app_name):
