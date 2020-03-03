@@ -1,7 +1,7 @@
 import util
 from datetime import datetime
 from flask_api import status
-from flask import Blueprint, request, jsonify, make_response
+from flask import Blueprint, request, jsonify, make_response, current_app as app
 from pymongo import ASCENDING
 from bson.json_util import loads
 from process_memory.db import get_database
@@ -42,7 +42,9 @@ def get_entities_with_ids():
     if request.data:
         data = set()
         db = get_database()
+        app.logger.debug('getting entities with ids:')
         for item in loads(request.data).pop('entities', None):
+            app.logger.debug(item)
             query_items = {f"header.timestamp": {"$gte": util.get_datetime_from(item['timestamp'])},
                            f"data.id": {"$eq": item['id']}}
             [data.add(item['header']['instanceId']) for item in db['entities'].find(query_items)]
@@ -59,8 +61,9 @@ def get_entities_with_type():
     if request.data:
         data = set()
         db = get_database()
-
+        app.logger.debug('getting entities with type:')
         for item in loads(request.data).pop('entities', None):
+            app.logger.debug(item)
             query_items = {f"header.timestamp": {"$gte": util.get_datetime_from(item['timestamp'])},
                            f"type": {"$eq": item['type']}}
             [data.add(item['header']['instanceId']) for item in db['entities'].find(query_items)]
