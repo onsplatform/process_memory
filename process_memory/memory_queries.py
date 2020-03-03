@@ -1,5 +1,7 @@
 import util
-from flask import Blueprint, request, jsonify
+from datetime import datetime
+from flask_api import status
+from flask import Blueprint, request, jsonify, make_response
 from pymongo import ASCENDING
 from bson.json_util import loads
 from process_memory.db import get_database
@@ -24,6 +26,7 @@ def find_head(instance_id):
         result['commit'] = commit if commit else False
 
         return jsonify(result)
+    return make_response('', status.HTTP_404_NOT_FOUND)
 
 
 def _get_memory_body(instance_id):
@@ -48,6 +51,8 @@ def get_entities_with_ids():
                 [item['instanceId'] for item in
                  db['event'].find({"instanceId": {"$in": list(data)}}).sort('timestamp', ASCENDING)])
 
+    return make_response('', status.HTTP_404_NOT_FOUND)
+
 
 @bp.route("/entities/with/type", methods=['POST'])
 def get_entities_with_type():
@@ -65,12 +70,19 @@ def get_entities_with_type():
                 [item['instanceId'] for item in
                  db['event'].find({"instanceId": {"$in": list(data)}}).sort('timestamp', ASCENDING)])
 
+    return make_response('', status.HTTP_404_NOT_FOUND)
+
+
+def _format_timestamp(date):
+    return datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f')
 
 @bp.route("/payload/<uuid:instance_id>", methods=['GET'])
 def get_payload(instance_id):
     event = get_memory_part(instance_id, 'event')
     if event:
         return jsonify(event['payload'])
+
+    return make_response('', status.HTTP_404_NOT_FOUND)
 
 
 @bp.route("/fork/<uuid:instance_id>", methods=['GET'])
