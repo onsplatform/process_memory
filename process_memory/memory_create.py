@@ -68,6 +68,7 @@ def _persist_event(db, event, header):
     new_event['scope'] = event.get('scope', None)
     new_event['instanceId'] = event.get('instanceId', None)
     new_event['reproduction'] = header['reproduction']
+    new_event['reprocessing'] = header['reprocessing']
     new_event['timestamp'] = util.get_datetime_from(event.get('timestamp'))
     new_event['owner'] = event.get('owner', None)
     new_event['tag'] = event.get('tag', None)
@@ -123,6 +124,7 @@ def _create_header_object(json_data, app_name):
     new_header['eventOut'] = json_data.get('eventOut', None)
     new_header['commit'] = json_data.get('commit', None)
     new_header['reproduction'] = json_data.get('reproduction', None)
+    new_header['reprocessing'] = json_data.get('reprocessing', None)
     new_header['app_name'] = app_name
     new_header['timestamp'] = util.get_datetime_from(json_data.get('timestamp', None))
     return new_header
