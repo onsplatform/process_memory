@@ -123,6 +123,7 @@ def _create_header_object(json_data, app_name):
     new_header['systemId'] = json_data.get('systemId')
     new_header['eventOut'] = json_data.get('eventOut', None)
     new_header['commit'] = json_data.get('commit', None)
+    new_header['version'] = json_data.get('version', None)
     new_header['reproduction'] = json_data.get('reproduction', None)
     new_header['reprocessing'] = json_data.get('reprocessing', None)
     new_header['app_name'] = app_name
