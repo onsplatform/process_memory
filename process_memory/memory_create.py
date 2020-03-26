@@ -50,14 +50,13 @@ def _create_or_update_memory(entities, event, fork, maps, header):
 
 def _get_memory_body(json_data):
     json_data = json_data.pop('json', json_data)
-    event = json_data.pop('event', None)
     fork = json_data.pop('fork', None)
     map = json_data.pop('map', {})
     app_name = map.pop('name', None)
     maps = map.pop('content', None)
     entities = json_data.pop('dataset', {}).pop('entities', None)
-    json_data['timestamp'] = event.get('timestamp', datetime.utcnow())
-    header = _create_header_object(event, app_name)
+    header = _create_header_object(json_data, app_name)
+    event = json_data.pop('event', None)
     return entities, event, fork, maps, header
 
 
@@ -118,14 +117,15 @@ def _persist_entities(db, entities, header):
 
 def _create_header_object(json_data, app_name):
     new_header = dict()
+    event = json_data.get('event', None)
     new_header['instanceId'] = json_data.get('instanceId')
     new_header['processId'] = json_data.get('processId')
     new_header['systemId'] = json_data.get('systemId')
     new_header['eventOut'] = json_data.get('eventOut', None)
     new_header['commit'] = json_data.get('commit', None)
     new_header['version'] = json_data.get('version', None)
-    new_header['reproduction'] = json_data.get('reproduction', None)
-    new_header['reprocessing'] = json_data.get('reprocessing', None)
+    new_header['reproduction'] = event.get('reproduction', None)
+    new_header['reprocessing'] = event.get('reprocessing', None)
     new_header['app_name'] = app_name
-    new_header['timestamp'] = util.get_datetime_from(json_data.get('timestamp', None))
+    new_header['timestamp'] = util.get_datetime_from(event.get('timestamp', None))
     return new_header
