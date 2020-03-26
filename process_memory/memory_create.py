@@ -118,7 +118,7 @@ def _persist_entities(db, entities, header):
 def _create_header_object(json_data, app_name):
     new_header = dict()
     event = json_data.get('event', None)
-    new_header['instanceId'] = json_data.get('instanceId')
+    new_header['instanceId'] = event.get('instanceId')
     new_header['processId'] = json_data.get('processId')
     new_header['systemId'] = json_data.get('systemId')
     new_header['eventOut'] = json_data.get('eventOut', None)
