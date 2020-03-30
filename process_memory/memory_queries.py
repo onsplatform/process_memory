@@ -45,8 +45,7 @@ def get_entities_with_ids():
         app.logger.debug('getting entities with ids:')
         for item in loads(request.data).pop('entities', None):
             app.logger.debug(item)
-            query_items = {f"header.timestamp": {"$gte": util.get_datetime_from(item['timestamp'])},
-                           f"data.id": {"$eq": item['id']}}
+            query_items = {f"data.id": {"$eq": item['id']}}
             [data.add(item['header']['instanceId']) for item in db['entities'].find(query_items)]
         if data:
             return jsonify(
@@ -64,8 +63,7 @@ def get_entities_with_type():
         app.logger.debug('getting entities with type:')
         for item in loads(request.data).pop('entities', None):
             app.logger.debug(item)
-            query_items = {f"header.timestamp": {"$gte": util.get_datetime_from(item['timestamp'])},
-                           f"type": {"$eq": item['type']}}
+            query_items = {f"type": {"$eq": item['type']}}
             [data.add(item['header']['instanceId']) for item in db['entities'].find(query_items)]
 
         if data:
