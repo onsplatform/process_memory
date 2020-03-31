@@ -50,7 +50,10 @@ def get_entities_with_ids():
         if data:
             return jsonify(
                 [item['instanceId'] for item in
-                 db['event'].find({"instanceId": {"$in": list(data)}}).sort('timestamp', ASCENDING)])
+                 db['event'].find({
+                     "instanceId": {"$in": list(data)},
+                     "reprocessing": {}
+                 }).sort('timestamp', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
 
@@ -69,13 +72,17 @@ def get_entities_with_type():
         if data:
             return jsonify(
                 [item['instanceId'] for item in
-                 db['event'].find({"instanceId": {"$in": list(data)}}).sort('timestamp', ASCENDING)])
+                 db['event'].find({
+                     "instanceId": {"$in": list(data)},
+                     "reprocessing": {}
+                 }).sort('timestamp', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
 
 
 def _format_timestamp(date):
     return datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f')
+
 
 @bp.route("/payload/<uuid:instance_id>", methods=['GET'])
 def get_payload(instance_id):
@@ -114,6 +121,7 @@ def get_memory_part(instance_id, collection):
         data.pop('_id')
         return data
 
+
 def _get_maps(instance_id):
     header_query = {"header.instanceId": str(instance_id)}
 
@@ -124,6 +132,7 @@ def _get_maps(instance_id):
         ret[item['type']] = item['data']
 
     return ret
+
 
 def _get_entities(instance_id):
     header_query = {"header.instanceId": str(instance_id)}
