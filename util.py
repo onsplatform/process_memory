@@ -15,8 +15,8 @@ def convert_to_utc(date, format):
 	return pst.localize(date_validity)
 
 
-def get_datetime_from(date_string: str):
-	return datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%S.%f')
+def get_datetime_from(date_string: str, format='%Y-%m-%dT%H:%M:%S.%f'):
+	return datetime.strptime(date_string, format)
 
 def create_document(body):
 	"""	Prepare document for persistance."""
