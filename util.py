@@ -16,7 +16,8 @@ def convert_to_utc(date, format):
 
 
 def get_datetime_from(date_string: str, format='%Y-%m-%dT%H:%M:%S.%f'):
-	return datetime.strptime(date_string, format)
+	if date_string:
+		return datetime.strptime(date_string, format)
 
 def create_document(body):
 	"""	Prepare document for persistance."""
