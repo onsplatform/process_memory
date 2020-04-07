@@ -97,13 +97,13 @@ def get_events_between_dates():
         return jsonify(
             [item['instanceId'] for item in
              db['event'].find({
-                 'timestamp': {
+                 'referenceDate': {
                      '$gte': date_begin_validity,
                      '$lte': date_end_validity,
                  },
                  'header.processId': {"$eq": process_id},
                  'scope': {'$eq':'execution'}
-             }).sort('timestamp', ASCENDING)])
+             }).sort('referenceDate', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
 
