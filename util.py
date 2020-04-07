@@ -1,10 +1,18 @@
-from datetime import datetime
 import json
+import pytz
+
+from datetime import datetime
 from bson import json_util
 
 
 def get_time():
 	return datetime.utcnow()
+
+
+def convert_to_utc(date, format):
+	date_validity = datetime.strptime(date, format)
+	pst = pytz.timezone('Brazil/East')
+	return pst.localize(date_validity)
 
 
 def get_datetime_from(date_string: str):

@@ -1,4 +1,4 @@
-import util
+from util import convert_to_utc
 from datetime import datetime
 from flask_api import status
 from flask import Blueprint, request, jsonify, make_response, current_app as app
@@ -47,6 +47,7 @@ def get_entities_with_ids():
             app.logger.debug(item)
             query_items = {f"data.id": {"$eq": item['id']}}
             [data.add(item['header']['instanceId']) for item in db['entities'].find(query_items)]
+
         if data:
             return jsonify(
                 [item['instanceId'] for item in
@@ -76,6 +77,28 @@ def get_entities_with_type():
                      "instanceId": {"$in": list(data)},
                      "reprocessing": {}
                  }).sort('timestamp', ASCENDING)])
+
+    return make_response('', status.HTTP_404_NOT_FOUND)
+
+
+@bp.route("/events/between/dates", methods=['POST'])
+def get_events_between_dates():
+    if request.data:
+        db = get_database()
+        json = loads(request.data)
+        date_begin_validity = convert_to_utc(json['date_begin_validity'], '%Y-%m-%d %H:%M:%S')
+        date_end_validity = convert_to_utc(json['date_end_validity'], '%Y-%m-%d %H:%M:%S')
+        app.logger.debug(f'getting events between dates {date_begin_validity} and {date_end_validity}')
+        return jsonify(
+            [item['instanceId'] for item in
+             db['event'].find({
+                 'timestamp': {
+                     '$gte': date_begin_validity,
+                     '$lte': date_end_validity,
+                 },
+                 'header.processId': {"$eq": json['process_id']},
+                 'reprocessing': {}
+             }).sort('timestamp', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
 
