@@ -53,7 +53,7 @@ def get_entities_with_ids():
                 [item['instanceId'] for item in
                  db['event'].find({
                      "instanceId": {"$in": list(data)},
-                     "reprocessing": {}
+                     'scope': {'$eq':'execution'}
                  }).sort('timestamp', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
@@ -75,7 +75,7 @@ def get_entities_with_type():
                 [item['instanceId'] for item in
                  db['event'].find({
                      "instanceId": {"$in": list(data)},
-                     "reprocessing": {}
+                     'scope': {'$eq':'execution'}
                  }).sort('timestamp', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
@@ -86,8 +86,13 @@ def get_events_between_dates():
     if request.data:
         db = get_database()
         json = loads(request.data)
-        date_begin_validity = convert_to_utc(json['date_begin_validity'], '%Y-%m-%d %H:%M:%S')
-        date_end_validity = convert_to_utc(json['date_end_validity'], '%Y-%m-%d %H:%M:%S')
+        date_format = '%Y-%m-%dT%H:%M'
+        date_begin_validity = convert_to_utc(json['date_begin_validity'], date_format)
+        date_end_validity = convert_to_utc(datetime.now().strftime(date_format), date_format)
+        process_id = json['process_id']
+        if json['date_end_validity']:
+            date_end_validity = convert_to_utc(json['date_end_validity'], date_format)
+
         app.logger.debug(f'getting events between dates {date_begin_validity} and {date_end_validity}')
         return jsonify(
             [item['instanceId'] for item in
@@ -96,8 +101,8 @@ def get_events_between_dates():
                      '$gte': date_begin_validity,
                      '$lte': date_end_validity,
                  },
-                 'header.processId': {"$eq": json['process_id']},
-                 'reprocessing': {}
+                 'header.processId': {"$eq": process_id},
+                 'scope': {'$eq':'execution'}
              }).sort('timestamp', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
