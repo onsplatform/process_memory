@@ -30,11 +30,18 @@ def find_head(instance_id):
 
 
 def _get_memory_body(instance_id):
-    event = get_memory_part(instance_id, 'event')
+    event = _get_event_body(instance_id)
     maps = _get_maps(instance_id)
     entities = _get_entities(instance_id)
     fork = get_memory_part(instance_id, 'fork')
     return entities, event, fork, maps
+
+
+def _get_event_body(instance_id):
+    event = get_memory_part(instance_id, 'event')
+    if event['referenceDate']:
+        event['referenceDate'] = event['referenceDate'].strftime('%Y-%m-%dT%H:%M:%SZ')
+    return event
 
 
 @bp.route('/entities/with/ids', methods=['POST'])
