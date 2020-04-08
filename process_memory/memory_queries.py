@@ -135,7 +135,7 @@ def get_fork(instance_id):
 
 @bp.route("/event/<uuid:instance_id>", methods=['GET'])
 def get_event(instance_id):
-    return jsonify(get_memory_part(instance_id, 'event'))
+    return jsonify(_get_event_body(instance_id))
 
 
 @bp.route("/entities/<uuid:instance_id>", methods=['GET'])
