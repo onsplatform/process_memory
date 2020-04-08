@@ -1,5 +1,7 @@
-from datetime import datetime
 import json
+import pytz
+
+from datetime import datetime
 from bson import json_util
 
 
@@ -7,8 +9,15 @@ def get_time():
 	return datetime.utcnow()
 
 
-def get_datetime_from(date_string: str):
-	return datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%S.%f')
+def convert_to_utc(date, format):
+	date_validity = datetime.strptime(date, format)
+	pst = pytz.timezone('Brazil/East')
+	return pst.localize(date_validity)
+
+
+def get_datetime_from(date_string: str, format='%Y-%m-%dT%H:%M:%S.%f'):
+	if date_string:
+		return datetime.strptime(date_string, format)
 
 def create_document(body):
 	"""	Prepare document for persistance."""

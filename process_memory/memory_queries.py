@@ -1,4 +1,4 @@
-import util
+from util import convert_to_utc
 from datetime import datetime
 from flask_api import status
 from flask import Blueprint, request, jsonify, make_response, current_app as app
@@ -30,11 +30,18 @@ def find_head(instance_id):
 
 
 def _get_memory_body(instance_id):
-    event = get_memory_part(instance_id, 'event')
+    event = _get_event_body(instance_id)
     maps = _get_maps(instance_id)
     entities = _get_entities(instance_id)
     fork = get_memory_part(instance_id, 'fork')
     return entities, event, fork, maps
+
+
+def _get_event_body(instance_id):
+    event = get_memory_part(instance_id, 'event')
+    if event['referenceDate']:
+        event['referenceDate'] = event['referenceDate'].strftime('%Y-%m-%dT%H:%M:%SZ')
+    return event
 
 
 @bp.route('/entities/with/ids', methods=['POST'])
@@ -47,12 +54,13 @@ def get_entities_with_ids():
             app.logger.debug(item)
             query_items = {f"data.id": {"$eq": item['id']}}
             [data.add(item['header']['instanceId']) for item in db['entities'].find(query_items)]
+
         if data:
             return jsonify(
                 [item['instanceId'] for item in
                  db['event'].find({
                      "instanceId": {"$in": list(data)},
-                     "reprocessing": {}
+                     'scope': {'$eq':'execution'}
                  }).sort('timestamp', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
@@ -74,8 +82,35 @@ def get_entities_with_type():
                 [item['instanceId'] for item in
                  db['event'].find({
                      "instanceId": {"$in": list(data)},
-                     "reprocessing": {}
+                     'scope': {'$eq':'execution'}
                  }).sort('timestamp', ASCENDING)])
+
+    return make_response('', status.HTTP_404_NOT_FOUND)
+
+
+@bp.route("/events/between/dates", methods=['POST'])
+def get_events_between_dates():
+    if request.data:
+        db = get_database()
+        json = loads(request.data)
+        date_format = '%Y-%m-%dT%H:%M'
+        date_begin_validity = convert_to_utc(json['date_begin_validity'], date_format)
+        date_end_validity = convert_to_utc(datetime.now().strftime(date_format), date_format)
+        process_id = json['process_id']
+        if json['date_end_validity']:
+            date_end_validity = convert_to_utc(json['date_end_validity'], date_format)
+
+        app.logger.debug(f'getting events between dates {date_begin_validity} and {date_end_validity}')
+        return jsonify(
+            [item['instanceId'] for item in
+             db['event'].find({
+                 'referenceDate': {
+                     '$gte': date_begin_validity,
+                     '$lte': date_end_validity,
+                 },
+                 'header.processId': {"$eq": process_id},
+                 'scope': {'$eq':'execution'}
+             }).sort('referenceDate', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
 
@@ -100,7 +135,7 @@ def get_fork(instance_id):
 
 @bp.route("/event/<uuid:instance_id>", methods=['GET'])
 def get_event(instance_id):
-    return jsonify(get_memory_part(instance_id, 'event'))
+    return jsonify(_get_event_body(instance_id))
 
 
 @bp.route("/entities/<uuid:instance_id>", methods=['GET'])
