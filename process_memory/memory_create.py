@@ -71,7 +71,7 @@ def _persist_event(db, event, header):
     new_event['timestamp'] = util.get_datetime_from(event.get('timestamp'))
     new_event['owner'] = event.get('owner', None)
     new_event['tag'] = event.get('tag', None)
-    new_event['referenceDate'] = util.get_datetime_from(event.get('referenceDate', None), '%Y-%m-%dT%H:%M:%SZ')
+    new_event['referenceDate'] = util.get_datetime_from(event.get('referenceDate', None), '%Y-%m-%dT%H:%M:%S.%fZ')
     new_event['branch'] = event.get('branch', None)
     new_event['payload'] = event.get('payload', None)
     query = {"header.instanceId": str(header['instanceId'])}
@@ -125,7 +125,7 @@ def _create_header_object(json_data, app_name):
     new_header['eventOut'] = json_data.get('eventOut', None)
     new_header['commit'] = json_data.get('commit', None)
     new_header['version'] = json_data.get('version', None)
-    new_header['referenceDate'] = util.get_datetime_from(event.get('referenceDate', None), '%Y-%m-%dT%H:%M:%SZ')
+    new_header['referenceDate'] = util.get_datetime_from(event.get('referenceDate', None), '%Y-%m-%dT%H:%M:%S.%fZ')
     new_header['reproduction'] = event.get('reproduction', None)
     new_header['reprocessing'] = event.get('reprocessing', None)
     new_header['app_name'] = app_name
