@@ -1,9 +1,11 @@
 import util
+
 from flask import current_app as app
-from datetime import datetime
 from flask_api import status
 from flask import Blueprint, request, make_response
+
 from bson.json_util import loads, CANONICAL_JSON_OPTIONS
+
 from process_memory.db import get_database
 from process_memory.memory_queries import find_head
 
@@ -18,8 +20,8 @@ def create_memory(instance_id):
         app.logger.debug('creating process memory: ' + str(instance_id))
         json_data = loads(request.data, json_options=CANONICAL_JSON_OPTIONS)
         app.logger.debug(json_data)
-        entities, event, fork, maps, header = _get_memory_body(json_data)
-        _create_or_update_memory(entities, event, fork, maps, header)
+        entities, event, fork, maps, instance_filter, header = _get_memory_body(json_data)
+        _create_or_update_memory(entities, event, fork, maps, instance_filter, header)
         return make_response('', status.HTTP_201_CREATED)
 
 
@@ -33,12 +35,12 @@ def clone_memory(from_instance_id, to_instance_id):
             'to': str(to_instance_id)
         }
         json_data['instanceId'] = str(to_instance_id)
-        entities, event, fork, maps, header = _get_memory_body(json_data)
-        _create_or_update_memory(entities, event, fork, maps, header)
+        entities, event, fork, maps, instance_filter, header = _get_memory_body(json_data)
+        _create_or_update_memory(entities, event, fork, maps, instance_filter, header)
         return make_response('', status.HTTP_201_CREATED)
 
 
-def _create_or_update_memory(entities, event, fork, maps, header):
+def _create_or_update_memory(entities, event, fork, maps, instance_filter, header):
     db = get_database()
     _persist_event(db, event, header) if event else None
     _persist_fork(db, fork, header) if fork else None
@@ -46,6 +48,7 @@ def _create_or_update_memory(entities, event, fork, maps, header):
     _delete_entities(db, header) if entities else None
     _persist_maps(db, maps, header) if maps else None
     _persist_entities(db, entities, header) if entities else None
+    _persist_instance_filter(db, instance_filter, header) if instance_filter else None
 
 
 def _get_memory_body(json_data):
@@ -54,10 +57,11 @@ def _get_memory_body(json_data):
     map = json_data.pop('map', {})
     app_name = map.pop('name', None)
     maps = map.pop('content', None)
+    instance_filter = json_data.pop('instance_filter', None)
     entities = json_data.pop('dataset', {}).pop('entities', None)
     header = _create_header_object(json_data, app_name)
     event = json_data.pop('event', None)
-    return entities, event, fork, maps, header
+    return entities, event, fork, maps, instance_filter, header
 
 
 def _persist_event(db, event, header):
@@ -114,6 +118,15 @@ def _persist_entities(db, entities, header):
                 docs.append({'header': header, 'data': value, 'type': key})
     if docs:
         db['entities'].insert_many(docs)
+
+
+def _persist_instance_filter(db, instance_filter, header):
+    docs = list()
+    for filter in instance_filter:
+        filter['header'] = header
+        docs.append(filter)
+    if docs:
+        db['instance_filter'].insert_many(docs)
 
 
 def _create_header_object(json_data, app_name):
