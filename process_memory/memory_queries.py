@@ -43,9 +43,14 @@ def _get_memory_body(instance_id):
 
 def _get_event_body(instance_id):
     event = get_memory_part(instance_id, 'event')
-    if event['referenceDate']:
-        event['referenceDate'] = event['referenceDate'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    _format_date(event, 'referenceDate')
+    _format_date(event, 'timestamp')
     return event
+
+
+def _format_date(event, field):
+    if event[field]:
+        event[field] = event[field].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
 
 @bp.route('/entities/with/ids', methods=['POST'])
@@ -64,7 +69,7 @@ def get_entities_with_ids():
                 [item['instanceId'] for item in
                  db['event'].find({
                      "instanceId": {"$in": list(data)},
-                     'scope': {'$eq':'execution'}
+                     'scope': {'$eq': 'execution'}
                  }).sort('timestamp', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
@@ -86,7 +91,7 @@ def get_entities_with_type():
                 [item['instanceId'] for item in
                  db['event'].find({
                      "instanceId": {"$in": list(data)},
-                     'scope': {'$eq':'execution'}
+                     'scope': {'$eq': 'execution'}
                  }).sort('timestamp', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
@@ -113,7 +118,7 @@ def get_events_between_dates():
                      '$lte': date_end_validity,
                  },
                  'header.processId': {"$eq": process_id},
-                 'scope': {'$eq':'execution'}
+                 'scope': {'$eq': 'execution'}
              }).sort('referenceDate', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
@@ -150,6 +155,7 @@ def get_entities(instance_id):
 @bp.route("/maps/<uuid:instance_id>", methods=['GET'])
 def get_maps(instance_id):
     return jsonify(_get_maps(instance_id))
+
 
 @bp.route("/instance_filter/<uuid:instance_id>", methods=['GET'])
 def get_instance_filter(instance_id):
