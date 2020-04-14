@@ -15,7 +15,7 @@ def convert_to_utc(date, format):
 	return pst.localize(date_validity)
 
 
-def get_datetime_from(date_string: str, format='%Y-%m-%dT%H:%M:%S.%f'):
+def get_datetime_from(date_string: str, format='%Y-%m-%dT%H:%M:%S.%fZ'):
 	if date_string:
 		return datetime.strptime(date_string, format)
 
