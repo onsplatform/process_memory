@@ -102,7 +102,7 @@ def get_events_between_dates():
     if request.data:
         db = get_database()
         json = loads(request.data)
-        date_format = '%Y-%m-%dT%H:%M:%S.%f'
+        date_format = '%Y-%m-%dT%H:%M'
         date_begin_validity = convert_to_utc(json['date_begin_validity'], date_format)
         date_end_validity = convert_to_utc(datetime.now().strftime(date_format), date_format)
         process_id = json['process_id']
