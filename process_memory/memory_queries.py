@@ -53,46 +53,60 @@ def _format_date(event, field):
         event[field] = event[field].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
 
-@bp.route('/entities/with/ids', methods=['POST'])
-def get_entities_with_ids():
+@bp.route('/instances/reprocessable/byentities', methods=['POST'])
+def instances_reprocessable_by_entities():
     if request.data:
         data = set()
         db = get_database()
         app.logger.debug('getting entities with ids:')
-        for item in loads(request.data).pop('entities', None):
-            app.logger.debug(item)
-            query_items = {f"data.id": {"$eq": item['id']}}
-            [data.add(item['header']['instanceId']) for item in db['entities'].find(query_items)]
+        entities = loads(request.data).pop('entities', None)
+        reprocessable_tables_grouped_by_tags = loads(request.data).pop('tables_grouped_by_tags', None)
 
-        if data:
-            return jsonify(
-                [item['instanceId'] for item in
-                 db['event'].find({
-                     "instanceId": {"$in": list(data)},
-                     'scope': {'$eq': 'execution'}
-                 }).sort('timestamp', ASCENDING)])
+        if entities and reprocessable_tables_grouped_by_tags:
+            query_items = {
+                "data.id": {"$in": entities},
+                "header.tag": {"$in": [*reprocessable_tables_grouped_by_tags.keys()]},
+                "data._metadata.changeTrack": {"$eq": 'query'}
+            }
+
+            for item in db['entities'].find(query_items):
+                if item['data']['_metadata']['table'] in reprocessable_tables_grouped_by_tags[item['header']['tag']]:
+                    data.add(item['header']['instanceId'])
+
+            if data:
+                return jsonify(
+                    [item['instanceId'] for item in
+                     db['event'].find({
+                         "instanceId": {"$in": list(data)},
+                         'scope': {'$eq': 'execution'}
+                     }).sort('timestamp', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
 
 
-@bp.route("/entities/with/type", methods=['POST'])
-def get_entities_with_type():
+@bp.route("/instances/bytags", methods=['POST'])
+def get_instances_by_tags():
     if request.data:
-        data = set()
         db = get_database()
-        app.logger.debug('getting entities with type:')
-        for item in loads(request.data).pop('entities', None):
-            app.logger.debug(item)
-            query_items = {f"type": {"$eq": item['type']}}
-            [data.add(item['header']['instanceId']) for item in db['entities'].find(query_items)]
+        app.logger.debug('getting entities with ids:')
+        reprocessable_tables_grouped_by_tags = loads(request.data).pop('tables_grouped_by_tags', None)
 
-        if data:
-            return jsonify(
-                [item['instanceId'] for item in
-                 db['event'].find({
-                     "instanceId": {"$in": list(data)},
-                     'scope': {'$eq': 'execution'}
-                 }).sort('timestamp', ASCENDING)])
+        if reprocessable_tables_grouped_by_tags:
+            query_items = {
+                "header.tag": {"$in": [*reprocessable_tables_grouped_by_tags.keys()]},
+                "data._metadata.changeTrack": {"$eq": 'query'},
+            }
+
+            data = (item['header']['instanceId'] for item in db['entities'].find(query_items) if
+                    item['data']['_metadata']['table'] in reprocessable_tables_grouped_by_tags[item['header']['tag']])
+
+            if data:
+                return jsonify(
+                    [item['instanceId'] for item in
+                     db['event'].find({
+                         "instanceId": {"$in": list(data)},
+                         'scope': {'$eq': 'execution'}
+                     }).sort('timestamp', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
 
