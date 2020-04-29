@@ -65,12 +65,12 @@ def instances_reprocessable_by_entities():
         if entities and reprocessable_tables_grouped_by_tags:
             query_items = {
                 "data.id": {"$in": entities},
-                "header.tag": {"$in": [*reprocessable_tables_grouped_by_tags.keys()]},
+                "header.image": {"$in": [*reprocessable_tables_grouped_by_tags.keys()]},
                 "data._metadata.changeTrack": {"$eq": 'query'}
             }
 
             for item in db['entities'].find(query_items):
-                if item['data']['_metadata']['table'] in reprocessable_tables_grouped_by_tags[item['header']['tag']]:
+                if item['data']['_metadata']['table'] in reprocessable_tables_grouped_by_tags[item['header']['image']]:
                     data.add(item['header']['instanceId'])
 
             if data:
@@ -93,12 +93,12 @@ def get_instances_by_tags():
 
         if reprocessable_tables_grouped_by_tags:
             query_items = {
-                "header.tag": {"$in": [*reprocessable_tables_grouped_by_tags.keys()]},
+                "header.image": {"$in": [*reprocessable_tables_grouped_by_tags.keys()]},
                 "data._metadata.changeTrack": {"$eq": 'query'},
             }
 
             data = (item['header']['instanceId'] for item in db['entities'].find(query_items) if
-                    item['data']['_metadata']['table'] in reprocessable_tables_grouped_by_tags[item['header']['tag']])
+                    item['data']['_metadata']['table'] in reprocessable_tables_grouped_by_tags[item['header']['image']])
 
             if data:
                 return jsonify(
