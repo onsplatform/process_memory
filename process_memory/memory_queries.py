@@ -75,7 +75,7 @@ def instances_reprocessable_by_entities():
 
             if data:
                 return jsonify(
-                    [item for item in
+                    [item['instanceId'] for item in
                      db['event'].find({
                          "instanceId": {"$in": list(data)},
                          'scope': {'$eq': 'execution'}
@@ -102,7 +102,7 @@ def get_instances_by_tags():
 
             if data:
                 return jsonify(
-                    [item['instanceId'] for item in
+                    [item for item in
                      db['event'].find({
                          "instanceId": {"$in": list(data)},
                          'scope': {'$eq': 'execution'}
