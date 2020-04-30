@@ -13,11 +13,13 @@ bp = Blueprint('instances', __name__)
 
 @bp.route("/<uuid:instance_id>/head")
 def find_head(instance_id):
-    entities, event, fork, maps, instance_filter = _get_memory_body(instance_id)
+    entities, event, fork, maps, instance_filter = _get_memory_body(
+        instance_id)
     if event:
         result = dict()
         result['event'] = event if event else None
-        result['map'] = {'content': maps if maps else {}, 'name': event['header']['app_name']}
+        result['map'] = {'content': maps if maps else {},
+                         'name': event['header']['app_name']}
         result['dataset'] = {'entities': entities if entities else {}}
         result['fork'] = fork if fork else None
         result['processId'] = result['event']['header']['processId']
@@ -60,7 +62,8 @@ def instances_reprocessable_by_entities():
         db = get_database()
         app.logger.debug('getting entities with ids:')
         entities = loads(request.data).pop('entities', None)
-        reprocessable_tables_grouped_by_tags = loads(request.data).pop('tables_grouped_by_tags', None)
+        reprocessable_tables_grouped_by_tags = loads(
+            request.data).pop('tables_grouped_by_tags', None)
 
         if entities and reprocessable_tables_grouped_by_tags:
             query_items = {
@@ -86,27 +89,33 @@ def instances_reprocessable_by_entities():
 
 @bp.route("/instances/bytags", methods=['POST'])
 def get_instances_by_tags():
+
     if request.data:
         db = get_database()
         app.logger.debug('getting entities with ids:')
-        reprocessable_tables_grouped_by_tags = loads(request.data).pop('tables_grouped_by_tags', None)
+        reprocessable_tables_grouped_by_tags = loads(
+            request.data).pop('tables_grouped_by_tags', None)
 
+        # Buca as instancias que consultaram os tags
         if reprocessable_tables_grouped_by_tags:
             query_items = {
-                "header.image": {"$in": [*reprocessable_tables_grouped_by_tags.keys()]},
+                "header.image": {"$in": list({*reprocessable_tables_grouped_by_tags.keys()})},
                 "data._metadata.changeTrack": {"$eq": 'query'},
             }
 
-            data = (item['header']['instanceId'] for item in db['entities'].find(query_items) if
-                    item['data']['_metadata']['table'] in reprocessable_tables_grouped_by_tags[item['header']['image']])
+            data = set()
 
+            for item in db['entities'].find(query_items):
+                if item['data']['_metadata']['table'] in reprocessable_tables_grouped_by_tags[item['header']['image']]:
+                    data.add(item['header']['instanceId'])
+                    
             if data:
                 return jsonify(
-                    [item for item in
-                     db['event'].find({
-                         "instanceId": {"$in": list(data)},
-                         'scope': {'$eq': 'execution'}
-                     }).sort('timestamp', ASCENDING)])
+                    [{'id': item['header']['instanceId'], 'tag': item['header']['image']} for item in
+                        db['event'].find({
+                            "instanceId": {"$in": list(data)},
+                            'scope': {'$eq': 'execution'}
+                        }).sort('timestamp', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
 
@@ -117,13 +126,17 @@ def get_events_between_dates():
         db = get_database()
         json = loads(request.data)
         date_format = '%Y-%m-%dT%H:%M:%S.%f'
-        date_begin_validity = convert_to_utc(json['date_begin_validity'], date_format)
-        date_end_validity = convert_to_utc(datetime.now().strftime(date_format), date_format)
+        date_begin_validity = convert_to_utc(
+            json['date_begin_validity'], date_format)
+        date_end_validity = convert_to_utc(
+            datetime.now().strftime(date_format), date_format)
         process_id = json['process_id']
         if json['date_end_validity']:
-            date_end_validity = convert_to_utc(json['date_end_validity'], date_format)
+            date_end_validity = convert_to_utc(
+                json['date_end_validity'], date_format)
 
-        app.logger.debug(f'getting events between dates {date_begin_validity} and {date_end_validity}')
+        app.logger.debug(
+            f'getting events between dates {date_begin_validity} and {date_end_validity}')
         return jsonify(
             [item['instanceId'] for item in
              db['event'].find({
