@@ -189,7 +189,7 @@ def get_instance_filter(instance_id):
     return jsonify(_get_instance_filter([str(instance_id)]))
 
 
-@bp.route("/instance_filters/byprocessmemoriesids", methods=['POST'])
+@bp.route("/instance_filters/byinstanceids", methods=['POST'])
 def get_instance_filters():
     if request.data:
         instance_ids = loads(request.data).pop('instance_ids', None)
