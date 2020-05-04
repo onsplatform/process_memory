@@ -173,7 +173,15 @@ def get_maps(instance_id):
 
 @bp.route("/instance_filter/<uuid:instance_id>", methods=['GET'])
 def get_instance_filter(instance_id):
-    return jsonify(_get_instance_filter(instance_id))
+    return jsonify(_get_instance_filter([str(instance_id)]))
+
+
+@bp.route("/instance_filters", methods=['POST'])
+def get_instance_filters():
+    if request.data:
+        instance_ids = loads(request.data).pop('instance_ids', None)
+        return jsonify(_get_instance_filter(instance_ids))
+    return make_response('', status.HTTP_404_NOT_FOUND)
 
 
 def get_memory_part(instance_id, collection):
@@ -211,14 +219,6 @@ def _get_entities(instance_id):
     return ret
 
 
-def _get_instance_filter(instance_id):
-    header_query = {"header.instanceId": str(instance_id)}
-
-    db = get_database()
-    ret = []
-    items = [item for item in db['instance_filter'].find(header_query)]
-    for item in items:
-        item.pop('_id')
-        ret.append(item)
-
-    return items
+def _get_instance_filter(instance_ids):
+    header_query = {"header.instanceId": {'$in': instance_ids}}
+    return (item for item in get_database()['instance_filter'].find(header_query))

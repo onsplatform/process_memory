@@ -1,5 +1,7 @@
 import os
 import logging
+
+from bson import ObjectId
 from flask import Flask
 from process_memory import db
 from flask.json import JSONEncoder
@@ -19,6 +21,8 @@ def create_app(test_config=None):
             try:
                 if isinstance(obj, date):
                     return obj.isoformat()
+                if isinstance(obj, ObjectId):
+                    return str(obj)
                 iterable = iter(obj)
             except TypeError:
                 pass
