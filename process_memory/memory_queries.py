@@ -200,7 +200,6 @@ def get_instance_filters():
 @bp.route("/instance_filters/byinstanceidsandtypes", methods=['POST'])
 def get_instance_filters_by_ids_and_types():
     if request.data:
-        import pdb; pdb.set_trace()
         instances_ids_and_types = loads(request.data).pop('instances_and_types', None)
         return jsonify(_get_instances_filters_by_ids_and_types(instances_ids_and_types))
     return make_response('', status.HTTP_404_NOT_FOUND)
@@ -256,7 +255,6 @@ def _get_instances_filters_by_ids_and_types(instances_ids_and_types):
 
 
 def _get_instance_filters_by_id_and_types(instance_id, types):
-    import pdb; pdb.set_trace()
     header_query = {
         "header.instanceId": {'$eq': instance_id}, 
         "type": {'$in': types}
