@@ -257,7 +257,7 @@ def _get_instances_filters_by_ids_and_types(instances_ids_and_types):
 def _get_instance_filters_by_id_and_types(instance_id, types):
     header_query = {
         "header.instanceId": {'$eq': instance_id}, 
-        "type": {'$in': types}
+        "type": {'$in': list(types)}
     }
 
     return (item for item in get_database()['instance_filter'].find(header_query))
