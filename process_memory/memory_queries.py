@@ -240,6 +240,9 @@ def _get_entities(instance_id):
     return ret
 
 def _get_instance_filter(instance_ids):
+    if not isinstance(instance_ids, list):
+        instance_ids = [str(instance_ids)]
+
     header_query = {"header.instanceId": {'$in': instance_ids}}
     return (item for item in get_database()['instance_filter'].find(header_query))
 
