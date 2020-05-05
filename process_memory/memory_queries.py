@@ -197,6 +197,14 @@ def get_instance_filters():
     return make_response('', status.HTTP_404_NOT_FOUND)
 
 
+@bp.route("/instance_filters/byinstanceidsandtypes", methods=['POST'])
+def get_instance_filters():
+    if request.data:
+        import pdb; pdb.set_trace()
+        instances_ids_and_types = loads(request.data).pop('instances_and_types', None)
+        return jsonify(_get_instances_filters_by_ids_and_types(instances_ids_and_types))
+    return make_response('', status.HTTP_404_NOT_FOUND)
+
 def get_memory_part(instance_id, collection):
     header_query = {"header.instanceId": str(instance_id)}
     db = get_database()
@@ -231,7 +239,24 @@ def _get_entities(instance_id):
 
     return ret
 
-
 def _get_instance_filter(instance_ids):
     header_query = {"header.instanceId": {'$in': instance_ids}}
+    return (item for item in get_database()['instance_filter'].find(header_query))
+
+def _get_instances_filters_by_ids_and_types(instances_ids_and_types):
+    filters = []
+
+    for k, v in instances_ids_and_types.items():
+        [filters.append(item) for item in _get_instance_filters_by_id_and_types(k, v)]
+
+    return filters
+
+
+def _get_instance_filters_by_id_and_types(instance_id, types):
+    import pdb; pdb.set_trace()
+    header_query = {
+        "header.instanceId": {'$eq': instance_id}, 
+        "type": {'$in': types}
+    }
+
     return (item for item in get_database()['instance_filter'].find(header_query))
