@@ -198,7 +198,7 @@ def get_instance_filters():
 
 
 @bp.route("/instance_filters/byinstanceidsandtypes", methods=['POST'])
-def get_instance_filters():
+def get_instance_filters_by_ids_and_types():
     if request.data:
         import pdb; pdb.set_trace()
         instances_ids_and_types = loads(request.data).pop('instances_and_types', None)
