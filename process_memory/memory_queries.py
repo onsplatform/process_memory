@@ -13,11 +13,13 @@ bp = Blueprint('instances', __name__)
 
 @bp.route("/<uuid:instance_id>/head")
 def find_head(instance_id):
-    entities, event, fork, maps, instance_filter = _get_memory_body(instance_id)
+    entities, event, fork, maps, instance_filter = _get_memory_body(
+        instance_id)
     if event:
         result = dict()
         result['event'] = event if event else None
-        result['map'] = {'content': maps if maps else {}, 'name': event['header']['app_name']}
+        result['map'] = {'content': maps if maps else {},
+                         'name': event['header']['app_name']}
         result['dataset'] = {'entities': entities if entities else {}}
         result['fork'] = fork if fork else None
         result['processId'] = result['event']['header']['processId']
@@ -53,46 +55,67 @@ def _format_date(event, field):
         event[field] = event[field].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
 
-@bp.route('/entities/with/ids', methods=['POST'])
-def get_entities_with_ids():
+@bp.route('/instances/reprocessable/byentities', methods=['POST'])
+def instances_reprocessable_by_entities():
     if request.data:
         data = set()
         db = get_database()
         app.logger.debug('getting entities with ids:')
-        for item in loads(request.data).pop('entities', None):
-            app.logger.debug(item)
-            query_items = {f"data.id": {"$eq": item['id']}}
-            [data.add(item['header']['instanceId']) for item in db['entities'].find(query_items)]
+        entities = loads(request.data).pop('entities', None)
+        reprocessable_tables_grouped_by_tags = loads(
+            request.data).pop('tables_grouped_by_tags', None)
 
-        if data:
-            return jsonify(
-                [item['instanceId'] for item in
-                 db['event'].find({
-                     "instanceId": {"$in": list(data)},
-                     'scope': {'$eq': 'execution'}
-                 }).sort('timestamp', ASCENDING)])
+        if entities and reprocessable_tables_grouped_by_tags:
+            query_items = {
+                "data.id": {"$in": entities},
+                "header.image": {"$in": [*reprocessable_tables_grouped_by_tags.keys()]},
+                "data._metadata.changeTrack": {"$eq": 'query'}
+            }
+
+            for item in db['entities'].find(query_items):
+                if item['data']['_metadata']['table'] in reprocessable_tables_grouped_by_tags[item['header']['image']]:
+                    data.add(item['header']['instanceId'])
+
+            if data:
+                return jsonify(
+                    [item['instanceId'] for item in
+                     db['event'].find({
+                         "instanceId": {"$in": list(data)},
+                         'scope': {'$eq': 'execution'}
+                     }).sort('timestamp', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
 
 
-@bp.route("/entities/with/type", methods=['POST'])
-def get_entities_with_type():
-    if request.data:
-        data = set()
-        db = get_database()
-        app.logger.debug('getting entities with type:')
-        for item in loads(request.data).pop('entities', None):
-            app.logger.debug(item)
-            query_items = {f"type": {"$eq": item['type']}}
-            [data.add(item['header']['instanceId']) for item in db['entities'].find(query_items)]
+@bp.route("/instances/bytags", methods=['POST'])
+def get_instances_by_tags():
 
-        if data:
-            return jsonify(
-                [item['instanceId'] for item in
-                 db['event'].find({
-                     "instanceId": {"$in": list(data)},
-                     'scope': {'$eq': 'execution'}
-                 }).sort('timestamp', ASCENDING)])
+    if request.data:
+        db = get_database()
+        app.logger.debug('getting entities with ids:')
+        reprocessable_tables_grouped_by_tags = loads(
+            request.data).pop('tables_grouped_by_tags', None)
+
+        # Buca as instancias que consultaram os tags
+        if reprocessable_tables_grouped_by_tags:
+            query_items = {
+                "header.image": {"$in": list({*reprocessable_tables_grouped_by_tags.keys()})},
+                "data._metadata.changeTrack": {"$eq": 'query'},
+            }
+
+            data = set()
+
+            for item in db['entities'].find(query_items):
+                if item['data']['_metadata']['table'] in reprocessable_tables_grouped_by_tags[item['header']['image']]:
+                    data.add(item['header']['instanceId'])
+                    
+            if data:
+                return jsonify(
+                    [{'id': item['header']['instanceId'], 'tag': item['header']['image']} for item in
+                        db['event'].find({
+                            "instanceId": {"$in": list(data)},
+                            'scope': {'$eq': 'execution'}
+                        }).sort('timestamp', ASCENDING)])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
 
@@ -103,13 +126,17 @@ def get_events_between_dates():
         db = get_database()
         json = loads(request.data)
         date_format = '%Y-%m-%dT%H:%M:%S.%f'
-        date_begin_validity = convert_to_utc(json['date_begin_validity'], date_format)
-        date_end_validity = convert_to_utc(datetime.now().strftime(date_format), date_format)
+        date_begin_validity = convert_to_utc(
+            json['date_begin_validity'], date_format)
+        date_end_validity = convert_to_utc(
+            datetime.now().strftime(date_format), date_format)
         process_id = json['process_id']
         if json['date_end_validity']:
-            date_end_validity = convert_to_utc(json['date_end_validity'], date_format)
+            date_end_validity = convert_to_utc(
+                json['date_end_validity'], date_format)
 
-        app.logger.debug(f'getting events between dates {date_begin_validity} and {date_end_validity}')
+        app.logger.debug(
+            f'getting events between dates {date_begin_validity} and {date_end_validity}')
         return jsonify(
             [item['instanceId'] for item in
              db['event'].find({
@@ -159,8 +186,23 @@ def get_maps(instance_id):
 
 @bp.route("/instance_filter/<uuid:instance_id>", methods=['GET'])
 def get_instance_filter(instance_id):
-    return jsonify(_get_instance_filter(instance_id))
+    return jsonify(_get_instance_filter([str(instance_id)]))
 
+
+@bp.route("/instance_filters/byinstanceids", methods=['POST'])
+def get_instance_filters():
+    if request.data:
+        instance_ids = loads(request.data).pop('instance_ids', None)
+        return jsonify(_get_instance_filter(instance_ids))
+    return make_response('', status.HTTP_404_NOT_FOUND)
+
+
+@bp.route("/instance_filters/byinstanceidsandtypes", methods=['POST'])
+def get_instance_filters_by_ids_and_types():
+    if request.data:
+        instances_ids_and_types = loads(request.data).pop('instances_and_types', None)
+        return jsonify(_get_instances_filters_by_ids_and_types(instances_ids_and_types))
+    return make_response('', status.HTTP_404_NOT_FOUND)
 
 def get_memory_part(instance_id, collection):
     header_query = {"header.instanceId": str(instance_id)}
@@ -196,15 +238,26 @@ def _get_entities(instance_id):
 
     return ret
 
+def _get_instance_filter(instance_ids):
+    if not isinstance(instance_ids, list):
+        instance_ids = [str(instance_ids)]
 
-def _get_instance_filter(instance_id):
-    header_query = {"header.instanceId": str(instance_id)}
+    header_query = {"header.instanceId": {'$in': instance_ids}}
+    return (item for item in get_database()['instance_filter'].find(header_query))
 
-    db = get_database()
-    ret = []
-    items = [item for item in db['instance_filter'].find(header_query)]
-    for item in items:
-        item.pop('_id')
-        ret.append(item)
+def _get_instances_filters_by_ids_and_types(instances_ids_and_types):
+    filters = []
 
-    return items
+    for k, v in instances_ids_and_types.items():
+        [filters.append(item) for item in _get_instance_filters_by_id_and_types(k, v)]
+
+    return filters
+
+
+def _get_instance_filters_by_id_and_types(instance_id, types):
+    header_query = {
+        "header.instanceId": {'$eq': instance_id}, 
+        "type": {'$in': list(types)}
+    }
+
+    return (item for item in get_database()['instance_filter'].find(header_query))

@@ -72,6 +72,7 @@ def _persist_event(db, event, header):
     new_event['instanceId'] = event.get('instanceId', None)
     new_event['reproduction'] = header['reproduction']
     new_event['reprocessing'] = header['reprocessing']
+    new_event['image'] = header['image']
     new_event['timestamp'] = util.get_datetime_from(event.get('timestamp'))
     new_event['owner'] = event.get('owner', None)
     new_event['tag'] = event.get('tag', None)
@@ -138,9 +139,11 @@ def _create_header_object(json_data, app_name):
     new_header['eventOut'] = json_data.get('eventOut', None)
     new_header['commit'] = json_data.get('commit', None)
     new_header['version'] = json_data.get('version', None)
+    new_header['image'] = json_data.get('image', None)
     new_header['referenceDate'] = util.get_datetime_from(event.get('referenceDate', None), '%Y-%m-%dT%H:%M:%S.%fZ')
     new_header['reproduction'] = event.get('reproduction', None)
     new_header['reprocessing'] = event.get('reprocessing', None)
+    new_header['tag'] = event.get('tag', None)
     new_header['app_name'] = app_name
     new_header['timestamp'] = util.get_datetime_from(event.get('timestamp', None))
     return new_header
