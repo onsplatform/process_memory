@@ -27,7 +27,7 @@ def find_head(instance_id):
         commit = result['event']['header']['commit']
         result['commit'] = commit if commit else False
         result['instance_filter'] = instance_filter if instance_filter else []
-        #result['inputs'] = inputs if inputs else []
+        # result['inputs'] = inputs if inputs else []
         return jsonify(result)
     return make_response('', status.HTTP_404_NOT_FOUND)
 
@@ -38,7 +38,7 @@ def _get_memory_body(instance_id):
     entities = _get_entities(instance_id)
     fork = get_memory_part(instance_id, 'fork')
     instance_filter = _get_instance_filter(instance_id)
-    #inputs = _get_inputs(instance_id)
+    # inputs = _get_inputs(instance_id)
     return entities, event, fork, maps, instance_filter
 
 
@@ -167,6 +167,12 @@ def get_event(instance_id):
     return jsonify(_get_event_body(instance_id))
 
 
+@bp.route("/event/bynameanddate/<name>/<date_from>", defaults={'date_until': None}, methods=['GET'])
+@bp.route("/event/bynameanddate/<name>/<date_from>/<date_until>", methods=['GET'])
+def get_event_by_name_and_dates(name, date_from, date_until):
+    return jsonify(_get_event_by_name_and_dates(name, date_from, date_until))
+
+
 @bp.route("/entities/<uuid:instance_id>", methods=['GET'])
 def get_entities(instance_id):
     return jsonify(_get_entities(instance_id))
@@ -210,6 +216,23 @@ def get_memory_part(instance_id, collection):
     if data:
         data.pop('_id')
         return data
+
+
+def _get_event_by_name_and_dates(name, date_from, date_until):
+    date_format = '%Y-%m-%dT%H:%M:%S.%f'
+    date_from = convert_to_utc(date_from, date_format)
+    date_until = convert_to_utc(date_until, date_format) if date_until else convert_to_utc(
+        datetime.now().strftime(date_format), date_format)
+    header_query = {
+        "name": name,
+        'referenceDate': {
+            '$gte': date_from,
+            '$lte': date_until,
+        },
+    }
+    db = get_database()
+    data = db['event'].find(header_query)
+    return data
 
 
 def _get_maps(instance_id):
