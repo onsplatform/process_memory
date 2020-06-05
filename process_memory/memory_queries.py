@@ -219,7 +219,7 @@ def get_memory_part(instance_id, collection):
 
 
 def _get_event_by_name_and_dates(name, date_from, date_until):
-    date_format = '%Y-%m-%dT%H:%M:%S.%f'
+    date_format = '%Y-%m-%dT%H:%M:%SZ'
     date_from = convert_to_utc(date_from, date_format)
     date_until = convert_to_utc(date_until, date_format) if date_until else convert_to_utc(
         datetime.now().strftime(date_format), date_format)
