@@ -22,14 +22,23 @@ def get_database():
 
 
 def open_db_connection():
-    """ 
+    """
     Connect to database. First create the URI and then connect to it.
     Production params should come from a config file. Default values are provided for dev.
     uri = f"mongodb://{current_app.config['HOST']}:{current_app.config['PORT']}"
     """
     if 'db' not in g:
-
-        g.db = connect(db=current_app.config['DATABASE_NAME'], host=current_app.config['HOST'], alias='default')
+        if current_app.config['REPLICASET']:
+            uri = f'mongodb://' \
+                  f'{current_app.config["USER"]}:{current_app.config["SECRET"]}' \
+                  f'@{current_app.config["HOST"]}:{current_app.config["PORT"]}' \
+                  f'/?ssl=true' \
+                  f'&ssl_ca_certs={ROOT_PATH}/certs/rds-combined-ca-bundle.pem' \
+                  f'&replicaSet={current_app.config["REPLICASET"]}' \
+                  f'&readPreference=secondaryPreferred'
+            g.db = connect(current_app.config['DATABASE_NAME'], host=uri)
+        else:
+            g.db = connect(db=current_app.config['DATABASE_NAME'], host=current_app.config['HOST'], alias='default')
 
         """        
         g.db = connect(
@@ -55,4 +64,3 @@ def close_db_connection(e=None):
 
     if db is not None:
         disconnect_all()
-

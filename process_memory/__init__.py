@@ -38,7 +38,7 @@ def create_app(test_config=None):
         HOST=os.getenv('HOST', 'localhost'),
         DATABASE_NAME=os.getenv('DATABASE_NAME', 'platform_memory'),
         PORT=os.getenv('DOCDB_PORT', '27017'),
-        REPLICASET=os.getenv('DOCDB_REPLICASET', 'rs0'),
+        REPLICASET=os.getenv('DOCDB_REPLICASET', None),
         MAX_DOC_SIZE=os.getenv('DOCUMENT_SIZE', 15000000)
     )
     app.json_encoder = CustomJSONEncoder
