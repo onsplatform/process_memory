@@ -44,9 +44,10 @@ def _get_memory_body(instance_id):
 
 def _get_event_body(instance_id):
     event = get_memory_part(instance_id, 'event')
-    _format_date(event, 'referenceDate')
-    _format_date(event, 'timestamp')
-    return event
+    if event:
+        _format_date(event, 'referenceDate')
+        _format_date(event, 'timestamp')
+        return event
 
 
 def _format_date(event, field):
