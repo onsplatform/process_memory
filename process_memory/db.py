@@ -27,8 +27,9 @@ def open_db_connection():
     Production params should come from a config file. Default values are provided for dev.
     uri = f"mongodb://{current_app.config['HOST']}:{current_app.config['PORT']}"
     """
+    # import pdb; pdb.set_trace()
     if 'db' not in g:
-        if current_app.config['REPLICASET']:
+        if current_app.config['HOST'] != 'mongo':
             uri = f'mongodb://' \
                   f'{current_app.config["USER"]}:{current_app.config["SECRET"]}' \
                   f'@{current_app.config["HOST"]}:{current_app.config["PORT"]}' \
