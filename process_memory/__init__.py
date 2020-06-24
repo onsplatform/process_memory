@@ -33,8 +33,8 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config["JSON_SORT_KEYS"] = False
     app.config.from_mapping(
-        USER=os.getenv('DOCDB_USER', 'docdbadmin'),
-        SECRET=os.getenv('DOCDB_SECRET', 'docdbadmin'),
+        USER=os.getenv('DOCDB_USER', ''),
+        SECRET=os.getenv('DOCDB_SECRET', ''),
         HOST=os.getenv('HOST', 'mongo'),
         DATABASE_NAME=os.getenv('DATABASE_NAME', 'platform_memory'),
         PORT=os.getenv('DOCDB_PORT', '27017'),
