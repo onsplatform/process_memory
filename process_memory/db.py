@@ -3,13 +3,21 @@ from mongoengine import *
 
 ROOT_PATH = None
 
+def create_indexes(platform_memory):
+    platform_memory['entities'].create_index([("header.instanceId", 1)])
+    platform_memory['event'].create_index([("header.instanceId", 1)])
+    platform_memory['fork'].create_index([("header.instanceId", 1)])
+    platform_memory['instance_filter'].create_index([("header.instanceId", 1)])
+    platform_memory['maps'].create_index([("header.instanceId", 1)])
+
 
 def init_app(app):
     app.teardown_appcontext(close_db_connection)
     global ROOT_PATH
     ROOT_PATH = app.root_path
     with app.app_context():
-        get_database()
+        db = get_database()
+        create_indexes(db)
 
 
 def get_database():

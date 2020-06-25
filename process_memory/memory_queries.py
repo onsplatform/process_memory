@@ -227,15 +227,18 @@ def _get_maps(instance_id):
 
 def _get_entities(instance_id):
     header_query = {"header.instanceId": str(instance_id)}
-
     db = get_database()
-    items = [item for item in db['entities'].find(header_query)]
+    items = db['entities'].find(header_query)
+    items.batch_size(100000000000)
+    print("vai converter para lista: " + str(datetime.now()))
+    items = list(items)
     ret = dict()
+    print("Conveteru! " + str(datetime.now()))
     for item in items:
         if not item['type'] in ret.keys():
             ret[item['type']] = []
         ret[item['type']].append(item['data'])
-
+    print("retornou resultado: " + str(datetime.now()))
     return ret
 
 
