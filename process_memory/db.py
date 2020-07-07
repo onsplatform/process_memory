@@ -37,7 +37,7 @@ def open_db_connection():
     """
     # import pdb; pdb.set_trace()
     if 'db' not in g:
-        if current_app.config['HOST'] != 'mongo':
+        if current_app.config['HOST'] not in ('mongo', 'localhost'):
             uri = f'mongodb://' \
                   f'{current_app.config["USER"]}:{current_app.config["SECRET"]}' \
                   f'@{current_app.config["HOST"]}:{current_app.config["PORT"]}' \

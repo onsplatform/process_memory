@@ -1,12 +1,13 @@
 import os
+import time
 import logging
 
 from bson import ObjectId
-from flask import Flask
+from flask import Flask, g, request
 from process_memory import db
 from flask.json import JSONEncoder
 from datetime import date
-from . import memory_queries, collection, memory_create
+from . import memory_queries, memory_create
 
 
 def create_app(test_config=None):
@@ -56,6 +57,28 @@ def create_app(test_config=None):
     # Connects to database
     db.init_app(app)
 
+    @app.before_request
+    def before_request():
+        g.request_start_time = time.time()
+
+    @app.after_request
+    def after_request(response):
+        # Get elapsed time in milliseconds
+        elapsed = time.time() - g.request_start_time
+
+        # Collect request/response tags
+        tags = [
+            'endpoint:{endpoint}'.format(endpoint=request.endpoint),
+            'request_method:{method}'.format(method=request.method.lower()),
+            'status_code:{status_code}'.format(status_code=response.status_code),
+        ]
+
+        # Record our response time metric
+        app.logger.debug(f'Execution response time: {elapsed} {tags}')
+
+        # Return the original unmodified response
+        return response
+
     @app.route('/')
     def hello():
         return 'Hello, World! The application is running.'
@@ -67,6 +90,5 @@ def create_app(test_config=None):
 
     app.register_blueprint(memory_create.bp)
     app.register_blueprint(memory_queries.bp)
-    app.register_blueprint(collection.bp)
 
     return app

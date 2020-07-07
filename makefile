@@ -1,4 +1,5 @@
 debug: export FLASK_ENV=development
+debug | run: export HOST=localhost
 debug:
 	@flask run --port 8009
 run:

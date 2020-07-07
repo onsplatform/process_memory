@@ -151,6 +151,7 @@ def _create_header_object(json_data, app_name):
     new_header['version'] = json_data.get('version', None)
     new_header['image'] = json_data.get('image', None)
     new_header['referenceDate'] = util.get_datetime_from(event.get('referenceDate', None), '%Y-%m-%dT%H:%M:%S.%fZ')
+    new_header['scope'] = event.get('scope', None)
     new_header['reproduction'] = event.get('reproduction', None)
     new_header['reprocessing'] = event.get('reprocessing', None)
     new_header['tag'] = event.get('tag', None)

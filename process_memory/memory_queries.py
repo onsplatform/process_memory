@@ -8,6 +8,7 @@ from pymongo import ASCENDING
 from bson.json_util import loads
 from process_memory.db import get_database
 
+
 bp = Blueprint('instances', __name__)
 
 
@@ -27,7 +28,7 @@ def find_head(instance_id):
         commit = result['event']['header']['commit']
         result['commit'] = commit if commit else False
         result['instance_filter'] = instance_filter if instance_filter else []
-        #result['inputs'] = inputs if inputs else []
+        # result['inputs'] = inputs if inputs else []
         return jsonify(result)
     return make_response('', status.HTTP_404_NOT_FOUND)
 
@@ -38,7 +39,7 @@ def _get_memory_body(instance_id):
     entities = _get_entities(instance_id)
     fork = get_memory_part(instance_id, 'fork')
     instance_filter = _get_instance_filter(instance_id)
-    #inputs = _get_inputs(instance_id)
+    # inputs = _get_inputs(instance_id)
     return entities, event, fork, maps, instance_filter
 
 
@@ -58,31 +59,26 @@ def _format_date(event, field):
 @bp.route('/instances/reprocessable/byentities', methods=['POST'])
 def instances_reprocessable_by_entities():
     if request.data:
-        data = set()
         db = get_database()
-        app.logger.debug('getting entities with ids:')
         entities = loads(request.data).pop('entities', None)
         reprocessable_tables_grouped_by_tags = loads(
             request.data).pop('tables_grouped_by_tags', None)
 
         if entities and reprocessable_tables_grouped_by_tags:
             query_items = {
-                "data.id": {"$in": entities},
-                "header.image": {"$in": [*reprocessable_tables_grouped_by_tags.keys()]},
-                "data._metadata.changeTrack": {"$eq": 'query'}
+                'data.id': {'$in': entities},
+                'header.image': {'$in': [*reprocessable_tables_grouped_by_tags.keys()]},
+                'header.scope': {'$eq': 'execution'},
+                'data._metadata.changeTrack': {'$eq': 'query'},
             }
 
-            for item in db['entities'].find(query_items):
-                if item['data']['_metadata']['table'] in reprocessable_tables_grouped_by_tags[item['header']['image']]:
-                    data.add(item['header']['instanceId'])
+            data = {item['header']['instanceId'] for item in db['entities'].find(query_items) if
+                    item['data']['_metadata']['table'] in reprocessable_tables_grouped_by_tags[item['header']['image']]}
+
+            data = _replace_original_instance_by_last_reprocess(data, db)
 
             if data:
-                return jsonify(
-                    [item['instanceId'] for item in
-                     db['event'].find({
-                         "instanceId": {"$in": list(data)},
-                         'scope': {'$eq': 'execution'}
-                     }).sort('timestamp', ASCENDING)])
+                return jsonify(data)
 
     return make_response('', status.HTTP_404_NOT_FOUND)
 
@@ -91,29 +87,27 @@ def instances_reprocessable_by_entities():
 def get_instances_by_tags():
     if request.data:
         db = get_database()
-        app.logger.debug('getting entities with ids:')
         reprocessable_tables_grouped_by_tags = loads(
             request.data).pop('tables_grouped_by_tags', None)
 
         if reprocessable_tables_grouped_by_tags:
             query_items = {
                 "header.image": {"$in": list({*reprocessable_tables_grouped_by_tags.keys()})},
+                'header.scope': {'$eq': 'execution'},
                 "data._metadata.changeTrack": {"$eq": 'query'},
             }
 
-            data = set()
+            data = {item['header']['instanceId'] for item in db['entities'].find(query_items) if
+                    item['data']['_metadata']['table'] in reprocessable_tables_grouped_by_tags[item['header']['image']]}
 
-            for item in db['entities'].find(query_items):
-                if item['data']['_metadata']['table'] in reprocessable_tables_grouped_by_tags[item['header']['image']]:
-                    data.add(item['header']['instanceId'])
+            data = _replace_original_instance_by_last_reprocess(data, db)
 
             if data:
                 return jsonify(
                     [{'id': item['header']['instanceId'], 'tag': item['header']['image']} for item in
                      db['event'].find({
                          "instanceId": {"$in": list(data)},
-                         'scope': {'$eq': 'execution'}
-                     }).sort('timestamp', ASCENDING)])
+                     })])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
 
@@ -271,3 +265,37 @@ def _get_instance_filters_by_id_and_types(instance_id, types):
     }
 
     return (item for item in get_database()['instance_filter'].find(header_query))
+
+
+def _replace_original_instance_by_last_reprocess(data, db):
+    last_reprocess_grouped_by_original = [
+        {'original': item['_id'], 'reprocess_instance_id': item['records'][0]['instanceId']} for item in
+        db['event'].aggregate([
+            {
+                '$sort': {"header.timestamp": -1}
+            },
+            {
+                '$group': {
+                    "_id": "$header.reprocessing.originalInstanceId",
+                    'timestamp': {
+                        '$first': "$header.timestamp"
+                    },
+                    "records": {'$push': "$$ROOT"}
+                }
+            },
+            {
+                '$redact': {
+                    '$cond': [{
+                        '$eq': [{'$ifNull': ["$header.timestamp", "$$ROOT.timestamp"]}, "$$ROOT.timestamp"]
+                    }, "$$DESCEND", "$$PRUNE"]
+                }
+            },
+            {
+                '$match': {
+                    '_id': {'$ne': None, '$in': list(data)}
+                }
+            }
+        ])]
+    data = data - {item['original'] for item in last_reprocess_grouped_by_original}
+    [data.add(item['reprocess_instance_id']) for item in last_reprocess_grouped_by_original]
+    return data
