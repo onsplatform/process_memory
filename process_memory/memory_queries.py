@@ -164,7 +164,7 @@ def get_current_events_between_dates():
 
         if data:
             return jsonify(
-                [item['header']['instanceId'] for item in
+                [{ 'id': item['header']['instanceId'], 'event': item['name']} for item in
                  db['event'].find({
                      "header.instanceId": {"$in": list(data)},
                  })])
