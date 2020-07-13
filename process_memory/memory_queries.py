@@ -8,7 +8,6 @@ from pymongo import ASCENDING
 from bson.json_util import loads
 from process_memory.db import get_database
 
-
 bp = Blueprint('instances', __name__)
 
 
@@ -106,7 +105,7 @@ def get_instances_by_tags():
                 return jsonify(
                     [{'id': item['header']['instanceId'], 'tag': item['header']['image']} for item in
                      db['event'].find({
-                         "instanceId": {"$in": list(data)},
+                         "header.instanceId": {"$in": list(data)},
                      })])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
@@ -133,8 +132,42 @@ def get_events_between_dates():
                      '$lte': date_end_validity,
                  },
                  'header.processId': {"$eq": process_id},
-                 'scope': {'$eq': 'execution'}
+                 'header.scope': {'$eq': 'execution'}
              }).sort('referenceDate', ASCENDING)])
+
+    return make_response('', status.HTTP_404_NOT_FOUND)
+
+
+@bp.route("/current/events/between/dates", methods=['POST'])
+def get_current_events_between_dates():
+    if request.data:
+        json = loads(request.data)
+        date_format = '%Y-%m-%dT%H:%M:%S.%f'
+        date_begin_validity = convert_to_utc(json['date_begin_validity'], date_format)
+        date_end_validity = convert_to_utc(datetime.now().strftime(date_format), date_format)
+        process_id = json['process_id']
+        if json['date_end_validity']:
+            date_end_validity = convert_to_utc(json['date_end_validity'], date_format)
+
+        app.logger.debug(f'getting events between dates {date_begin_validity} and {date_end_validity}')
+        query_items = {
+            'referenceDate': {
+                '$gte': date_begin_validity,
+                '$lte': date_end_validity,
+            },
+            'header.processId': {"$eq": process_id},
+            'header.scope': {'$eq': 'execution'},
+        }
+        db = get_database()
+        data = {item['header']['instanceId'] for item in db['event'].find(query_items)}
+        data = _replace_original_instance_by_last_reprocess(data, db)
+
+        if data:
+            return jsonify(
+                [item['header']['instanceId'] for item in
+                 db['event'].find({
+                     "header.instanceId": {"$in": list(data)},
+                 })])
 
     return make_response('', status.HTTP_404_NOT_FOUND)
 
